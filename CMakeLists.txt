@@ -3,14 +3,31 @@
 # (http://opensource.org/licenses/MIT)
 
 cmake_minimum_required(VERSION 3.0)
-cmake_policy(VERSION 3.0)
 
 project(Tulpar)
 
-find_package(OpenAL REQUIRED)
+option(TULPAR_BUILD_DEMOS "Build TulparAudio demo projects" ON)
 
-include_directories(${OPENAL_INCLUDE_DIR})
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-add_executable (tulpar Main.cpp)
+include(TulparAudioConfig)
 
-target_link_libraries(tulpar ${OPENAL_LIBRARY})
+if (NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output/lib)
+endif()
+
+if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output/lib)
+endif()
+
+if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
+endif()
+
+add_subdirectory(${TULPAR_AUDIO_ROOT})
+
+if (${TULPAR_BUILD_DEMOS})
+    add_subdirectory(demos)
+endif()
+
+set(TULPAR_AUDIO_LIB ${TULPAR_AUDIO_LIB} PARENT_SCOPE)

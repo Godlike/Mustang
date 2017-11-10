@@ -1,0 +1,9 @@
+[submodule "TulparAudio/external/stb"]
+	path = TulparAudio/external/stb
+	url = https://github.com/nothings/stb.git
+[submodule "TulparAudio/external/glm"]
+	path = TulparAudio/external/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "TulparAudio/external/spdlog"]
+	path = TulparAudio/external/spdlog
+	url = https://github.com/gabime/spdlog.git
