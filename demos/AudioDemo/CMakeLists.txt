@@ -18,5 +18,4 @@ endif ()
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(${PROJECT_NAME} ${TULPAR_AUDIOcd ..
-    _LIB})
+target_link_libraries(${PROJECT_NAME} ${TULPAR_AUDIO_LIB})

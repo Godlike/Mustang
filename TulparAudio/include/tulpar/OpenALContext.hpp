@@ -18,54 +18,13 @@ namespace tulpar
 class OpenALContext
 {
 public:
-    OpenALContext()
-    {
-    }
+    OpenALContext() = default;
 
-    ~OpenALContext()
-    {
-    }
+    ~OpenALContext() = default;
 
-    bool Init()
-    {
-        m_device = alcOpenDevice(NULL);
+    bool Init();
 
-        if(!m_device)
-        {
-            std::cerr << "Can't open device\n";
-            return false;
-        }
-
-        m_context = alcCreateContext(m_device, NULL);
-
-        alcMakeContextCurrent(m_context);
-
-        if(!m_context)
-        {
-            std::cerr << "Can't create context\n";
-            return false;
-        }
-
-        std::cout << "OpenAL initialized\n";
-        return true;
-    }
-
-    void Deinit()
-    {
-        alcMakeContextCurrent(NULL);
-
-        if(m_context)
-        {
-            alcDestroyContext(m_context);
-        }
-
-        if(m_device)
-        {
-            alcCloseDevice(m_device);
-        }
-            std::cout << "OpenAL deinitialized\n";
-    }
-
+    void Deinit();
 private:
     ALCdevice* m_device;
     ALCcontext* m_context;

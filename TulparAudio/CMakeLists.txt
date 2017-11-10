@@ -33,9 +33,16 @@ if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
 
+## Installation info
+include(InstallInfo)
+
 include(stb)
 
 find_package(OpenAL REQUIRED)
+
+include_directories(
+    ${TULPAR_AUDIO_INCLUDE_DIRS}
+)
 
 include_directories(SYSTEM
     ${GLM_INCLUDE_DIR}
@@ -43,13 +50,15 @@ include_directories(SYSTEM
     ${STB_INCLUDE_DIR}
 )
 
-set(TULPAR_AUDIO_HEADERS
-    include/tulpar/OpenALContext.hpp)
+set(TULPAR_AUDIO_HEADERS include/tulpar/OpenALContext.hpp)
 
-set(TULPAR_AUDIO_SOURCES
-    source/OpenALContext.cpp)
+set(TULPAR_AUDIO_SOURCES source/OpenALContext.cpp)
 
 add_library(${TULPAR_AUDIO_LIB}
     ${TULPAR_AUDIO_HEADERS}
     ${TULPAR_AUDIO_SOURCES}
+)
+
+target_link_libraries(${TULPAR_AUDIO_LIB}
+    ${OPENAL_LIBRARY}
 )
