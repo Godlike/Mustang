@@ -50,4 +50,14 @@ void OpenALContext::Deinit()
     std::cout << "OpenAL deinitialized\n";
 }
 
+
+AudioSource* OpenALContext::SpawnSource(std::string const& filename)
+{
+    AudioSource* asource = new AudioSource;
+    asource->Load(filename);
+    m_sources.push_back(asource);
+
+    return asource;
+}
+
 }

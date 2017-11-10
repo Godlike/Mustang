@@ -15,11 +15,13 @@ set(TULPAR_AUDIO_INCLUDE_DIRS
 list(APPEND CMAKE_MODULE_PATH "${TULPAR_AUDIO_ROOT}/cmake")
 
 include(GlmConfig)
+include(stb)
 
 find_package(GLM)
 
 set(TULPAR_AUDIO_EXTERNAL_INCLUDE_DEPENDENCIES
     ${GLM_INCLUDE_DIR}
+    ${STB_INCLUDE_DIR}
     CACHE LIST "List of Tulpar Audio external include dependencies")
 
 if (BUILD_SHARED_LIBS)

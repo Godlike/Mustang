@@ -50,9 +50,13 @@ include_directories(SYSTEM
     ${STB_INCLUDE_DIR}
 )
 
-set(TULPAR_AUDIO_HEADERS include/tulpar/OpenALContext.hpp)
+set(TULPAR_AUDIO_HEADERS
+    include/tulpar/OpenALContext.hpp
+    include/tulpar/AudioSource.hpp)
 
-set(TULPAR_AUDIO_SOURCES source/OpenALContext.cpp)
+set(TULPAR_AUDIO_SOURCES
+    source/OpenALContext.cpp
+    source/AudioSource.cpp)
 
 add_library(${TULPAR_AUDIO_LIB}
     ${TULPAR_AUDIO_HEADERS}
@@ -62,3 +66,8 @@ add_library(${TULPAR_AUDIO_LIB}
 target_link_libraries(${TULPAR_AUDIO_LIB}
     ${OPENAL_LIBRARY}
 )
+
+add_custom_command(TARGET ${TULPAR_AUDIO_LIB} PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${TULPAR_AUDIO_ROOT}/data/"
+                        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data/")

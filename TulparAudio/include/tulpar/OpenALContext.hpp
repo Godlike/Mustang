@@ -4,13 +4,17 @@
 * (http://opensource.org/licenses/MIT)
 */
 
-#ifndef OPENAL_CONTEXT_HPP
-#define OPENAL_CONTEXT_HPP
+#ifndef TULPAR_OPENAL_CONTEXT_HPP
+#define TULPAR_OPENAL_CONTEXT_HPP
+
+#include <tulpar/AudioSource.hpp>
 
 #include <AL/al.h>
 #include <AL/alc.h>
 
 #include <iostream>
+#include <string>
+#include <list>
 
 namespace tulpar
 {
@@ -25,11 +29,14 @@ public:
     bool Init();
 
     void Deinit();
+
+    AudioSource* SpawnSource(std::string const& filename);
 private:
     ALCdevice* m_device;
     ALCcontext* m_context;
+    std::list<AudioSource*> m_sources;
 };
 
 }
 
-#endif // OPENAL_CONTEXT_HPP
+#endif // TULPAR_OPENAL_CONTEXT_HPP

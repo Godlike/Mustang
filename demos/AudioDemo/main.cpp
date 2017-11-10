@@ -5,6 +5,7 @@
 */
 
 #include <tulpar/OpenALContext.hpp>
+#include <tulpar/AudioSource.hpp>
 
 int main(int argc, char **argv)
 {
@@ -14,6 +15,8 @@ int main(int argc, char **argv)
     {
         return -1;
     }
+
+    tulpar::AudioSource* as = ctx.SpawnSource("data/back.ogg");
 
     ctx.Deinit();
 }
