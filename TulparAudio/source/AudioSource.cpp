@@ -38,6 +38,20 @@ bool AudioSource::Load(std::string const& filename)
     delete[] buf;
     stb_vorbis_close(m_audioFile);
 
+
+    alGenSources((ALuint)1, &m_source);
+
+    alSourcef(m_source, AL_PITCH, 1);
+    // check for errors
+    alSourcef(m_source, AL_GAIN, 1);
+    // check for errors
+    alSource3f(m_source, AL_POSITION, 0, 0, 0);
+    // check for errors
+    alSource3f(m_source, AL_VELOCITY, 0, 0, 0);
+    // check for errors
+    alSourcei(m_source, AL_LOOPING, AL_FALSE);
+    // check for errros
+    alSourcei(m_source, AL_BUFFER, m_alBuffer);
     return true;
 }
 }

@@ -26,10 +26,24 @@ public:
     ~AudioSource();
 
     bool Load(std::string const& filename);
+
+    void Play()
+    {
+        alSourcePlay(m_source);
+        ALint source_state;
+        alGetSourcei(m_source, AL_SOURCE_STATE, &source_state);
+
+        while (source_state == AL_PLAYING)
+        {
+            alGetSourcei(m_source, AL_SOURCE_STATE, &source_state);
+        }
+    }
 private:
     stb_vorbis* m_audioFile;
     stb_vorbis_info m_audioFileInfo;
     unsigned int m_alBuffer;
+    ALuint m_source;
+
 };
 
 }

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     }
 
     tulpar::AudioSource* as = ctx.SpawnSource("data/back.ogg");
-
+    as->Play();
     ctx.Deinit();
 }
 
