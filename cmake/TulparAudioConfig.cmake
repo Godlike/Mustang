@@ -17,6 +17,12 @@ set(TULPAR_INCLUDE_DIR
     CACHE LIST "Tulpar include directories."
 )
 
+set(TULPAR_INTERNAL_INCLUDE_DIR
+    ${TULPAR_ROOT}/TulparAudio/internal/include
+
+    CACHE LIST "Tulpar internal include dirs."
+)
+
 # GLM
 include(GlmConfig)
 find_package(GLM)

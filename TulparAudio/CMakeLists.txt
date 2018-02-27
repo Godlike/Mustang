@@ -37,6 +37,7 @@ endif()
 
 include_directories(
     ${TULPAR_INCLUDE_DIR}
+    ${TULPAR_INTERNAL_INCLUDE_DIR}
     ${MULE_INCLUDE_DIR}
 )
 
@@ -58,7 +59,8 @@ install(
 
 set(TARGET_FOLDER_ROOT "${TARGET_FOLDER_ROOT}/audio")
 
-# add_subdirectory(audio)
+add_subdirectory(audio)
+add_subdirectory(internal)
 
 set(TULPAR_AUDIO_HEADERS
     include/tulpar/InternalLoggers.hpp
@@ -96,7 +98,8 @@ add_library(${TULPAR_AUDIO_LIB}
 
     ${TULPAR_AUDIO_EXTRA}
 
-#    $<TARGET_OBJECTS:audio>
+    $<TARGET_OBJECTS:audio>
+    $<TARGET_OBJECTS:tulpar_internal>
 )
 
 set_target_properties(
