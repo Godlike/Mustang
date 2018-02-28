@@ -6,7 +6,8 @@
 
 #include <tulpar/TulparAudio.hpp>
 
-#include <tulpar/internal/Collection.hpp>
+#include <tulpar/internal/BufferCollection.hpp>
+#include <tulpar/internal/SourceCollection.hpp>
 
 #include <cassert>
 

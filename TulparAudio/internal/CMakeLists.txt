@@ -11,7 +11,8 @@ set(INTERNAL_HEADERS
 )
 
 set(INTERNAL_SOURCES
-    source/Collection.cpp
+    source/BufferCollection.cpp
+    source/SourceCollection.cpp
 )
 
 add_library(tulpar_internal OBJECT

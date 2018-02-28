@@ -6,7 +6,7 @@
 
 #include <tulpar/audio/Buffer.hpp>
 
-#include <tulpar/internal/Collection.hpp>
+#include <tulpar/internal/BufferCollection.hpp>
 
 namespace tulpar
 {

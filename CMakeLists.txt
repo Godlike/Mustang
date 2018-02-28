@@ -6,7 +6,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project(Tulpar)
 
-option(MULE_BUILD_DOCUMENTATION "Build Tulpar documentation" OFF)
+option(TULPAR_BUILD_DOCUMENTATION "Build Tulpar documentation" OFF)
+option(TULPAR_BUILD_TESTS "Build Tulpar tests" ON)
 
 message(STATUS "${PROJECT_NAME} configuration:")
 message(STATUS "-- TULPAR_BUILD_DOCUMENTATION: ${TULPAR_BUILD_DOCUMENTATION}")
@@ -30,6 +31,13 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(TulparAudio)
+
+if (TULPAR_BUILD_TESTS)
+    enable_testing()
+    include(CTest)
+    set(CATCH_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/Catch2)
+    add_subdirectory(tests)
+endif()
 
 get_directory_property(TULPAR_HAS_PARENT PARENT_DIRECTORY)
 

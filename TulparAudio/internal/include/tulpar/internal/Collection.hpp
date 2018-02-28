@@ -7,15 +7,7 @@
 #ifndef TULPAR_INTERNAL_COLLECTION_HPP
 #define TULPAR_INTERNAL_COLLECTION_HPP
 
-#include <tulpar/audio/Buffer.hpp>
-#include <tulpar/audio/Source.hpp>
-
-#include <mule/asset/Content.hpp>
-
-#include <algorithm>
-#include <cassert>
 #include <cstdint>
-#include <memory>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -29,7 +21,12 @@ template<typename T>
     class Collection
 {
 public:
-    Collection();
+    using Handle = typename T::Handle;
+    using Handles = std::vector<Handle>;
+    using HandleGenerator = Handles (*)(uint32_t batchSize);
+    using HandleReclaimer = void (*)(Handle handle);
+
+    Collection(HandleGenerator generator, HandleReclaimer reclaimer);
 
     Collection(Collection const& other) = delete;
     Collection& operator=(Collection const& other) = delete;
@@ -38,75 +35,27 @@ public:
 
     void Initialize(uint32_t batchSize);
 
-    T Get(typename T::Handle handle) const;
-    bool IsValid(typename T::Handle handle) const;
+    T Get(Handle handle) const;
+    bool IsValid(Handle handle) const;
     T Spawn();
-    void Reclaim(typename T::Handle handle);
+    void Reclaim(Handle handle);
 
 protected:
-    virtual void GenerateHandles(uint32_t batchSize) = 0;
-    virtual T* GenerateObject(typename T::Handle handle) const = 0;
-    virtual T* CreateObject(typename T::Handle handle) = 0;
+    virtual T* GenerateObject(Handle handle) const = 0;
+    virtual T* CreateObject(Handle handle) = 0;
 
     uint32_t m_batchSize;
 
-    std::unordered_map<typename T::Handle, T*> m_sources;
+    HandleGenerator m_generator;
+    HandleReclaimer m_reclaimer;
 
-    std::vector<typename T::Handle> m_used;
-    std::queue<typename T::Handle> m_available;
-};
+    std::unordered_map<Handle, T*> m_sources;
 
-class BufferCollection
-    : public Collection<audio::Buffer>
-    , public std::enable_shared_from_this<BufferCollection>
-{
-public:
-    using Handle = audio::Buffer::Handle;
-
-    BufferCollection();
-    virtual ~BufferCollection();
-
-    void SetBufferName(Handle handle, std::string const& name);
-    std::string GetBufferName(Handle handle) const;
-
-    bool SetBufferData(Handle handle, mule::asset::Content const& content);
-
-    bool ResetBuffer(Handle handle);
-
-protected:
-    virtual void GenerateHandles(uint32_t batchSize) override final;
-    virtual audio::Buffer* GenerateObject(Handle handle) const override final;
-    virtual audio::Buffer* CreateObject(Handle handle) override final;
+    std::vector<Handle> m_used;
+    std::queue<Handle> m_available;
 
 private:
-    std::unordered_map<Handle, std::string> m_bufferNames;
-};
-
-class SourceCollection
-    : public Collection<audio::Source>
-    , public std::enable_shared_from_this<SourceCollection>
-{
-public:
-    using SourceHandle = audio::Source::Handle;
-    using BufferHandle = audio::Buffer::Handle;
-
-    SourceCollection(BufferCollection const& buffers);
-    virtual ~SourceCollection();
-
-    void BindBuffer(SourceHandle source, BufferHandle buffer);
-    audio::Buffer GetSourceBuffer(SourceHandle source) const;
-
-    bool ResetSource(SourceHandle source);
-
-protected:
-    virtual void GenerateHandles(uint32_t batchSize) override final;
-    virtual audio::Source* GenerateObject(SourceHandle handle) const override final;
-    virtual audio::Source* CreateObject(SourceHandle source) override final;
-
-private:
-    BufferCollection const& m_buffers;
-
-    std::unordered_map<SourceHandle, BufferHandle> m_sourceBuffers;
+    void PushHandles(Handles const& handles);
 };
 
 }

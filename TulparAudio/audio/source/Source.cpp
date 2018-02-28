@@ -6,7 +6,7 @@
 
 #include <tulpar/audio/Source.hpp>
 
-#include <tulpar/internal/Collection.hpp>
+#include <tulpar/internal/SourceCollection.hpp>
 
 namespace tulpar
 {
