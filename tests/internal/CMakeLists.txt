@@ -27,12 +27,21 @@ include_directories( SYSTEM
     ${TULPAR_EXTERNAL_INCLUDE_DIRS}
 )
 
-add_executable(CollectionTest CollectionTest.cpp)
-target_link_libraries(CollectionTest ${TULPAR_AUDIO_LIB})
-ParseAndAddCatchTests(CollectionTest)
+set(TEST_UTILS
+    CollectionTestUtils.hpp
+)
+
+add_executable(BufferCollectionTest BufferCollectionTest.cpp ${TEST_UTILS})
+target_link_libraries(BufferCollectionTest ${TULPAR_AUDIO_LIB})
+ParseAndAddCatchTests(BufferCollectionTest)
+
+add_executable(SourceCollectionTest SourceCollectionTest.cpp ${TEST_UTILS})
+target_link_libraries(SourceCollectionTest ${TULPAR_AUDIO_LIB})
+ParseAndAddCatchTests(SourceCollectionTest)
 
 set_target_properties(
-    CollectionTest
+    BufferCollectionTest
+    SourceCollectionTest
 
     PROPERTIES
 

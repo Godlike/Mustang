@@ -13,6 +13,13 @@ namespace tulpar
 namespace audio
 {
 
+Buffer::Buffer()
+    : m_parent()
+    , m_handle(0)
+{
+
+}
+
 bool Buffer::IsValid() const
 {
     return !m_parent.expired() && m_parent.lock()->IsValid(m_handle);

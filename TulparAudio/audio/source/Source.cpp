@@ -13,6 +13,13 @@ namespace tulpar
 namespace audio
 {
 
+Source::Source()
+    : m_parent()
+    , m_handle(0)
+{
+
+}
+
 bool Source::IsValid() const
 {
     return !m_parent.expired() && m_parent.lock()->IsValid(m_handle);

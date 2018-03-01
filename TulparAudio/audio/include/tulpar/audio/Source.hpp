@@ -28,6 +28,8 @@ class Source
 public:
     using Handle = uint32_t;
 
+    Source();
+
     Source(Source const& other) = default;
     Source& operator=(Source const& other) = default;
 

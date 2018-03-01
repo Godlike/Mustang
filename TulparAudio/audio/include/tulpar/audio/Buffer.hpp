@@ -28,6 +28,8 @@ class Buffer
 public:
     using Handle = uint32_t;
 
+    Buffer();
+
     Buffer(Buffer const& other) = default;
     Buffer& operator=(Buffer const& other) = default;
 
