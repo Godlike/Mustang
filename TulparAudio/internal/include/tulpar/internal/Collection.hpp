@@ -25,22 +25,27 @@ public:
     using Handles = std::vector<Handle>;
     using HandleGenerator = Handles (*)(uint32_t batchSize);
     using HandleReclaimer = void (*)(Handle handle);
+    using HandleDeleter = void (*)(Handles const& handles);
 
-    Collection(HandleGenerator generator, HandleReclaimer reclaimer);
+    Collection(HandleGenerator generator
+        , HandleReclaimer reclaimer
+        , HandleDeleter deleter
+    );
 
     Collection(Collection const& other) = delete;
     Collection& operator=(Collection const& other) = delete;
 
-    virtual ~Collection() = default;
+    virtual ~Collection();
 
     void Initialize(uint32_t batchSize);
 
     T Get(Handle handle) const;
     bool IsValid(Handle handle) const;
     T Spawn();
-    void Reclaim(Handle handle);
 
 protected:
+    void Reclaim(Handle handle);
+
     virtual T* GenerateObject(Handle handle) const = 0;
     virtual T* CreateObject(Handle handle) = 0;
 
@@ -48,6 +53,7 @@ protected:
 
     HandleGenerator m_generator;
     HandleReclaimer m_reclaimer;
+    HandleDeleter m_deleter;
 
     std::unordered_map<Handle, T*> m_sources;
 

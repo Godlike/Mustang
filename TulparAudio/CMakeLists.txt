@@ -102,6 +102,11 @@ add_library(${TULPAR_AUDIO_LIB}
     $<TARGET_OBJECTS:tulpar_internal>
 )
 
+target_link_libraries(${TULPAR_AUDIO_LIB}
+    ${MULE_UTILITIES_LIB}
+    ${OPENAL_LIBRARY}
+)
+
 set_target_properties(
     ${TULPAR_AUDIO_LIB}
     PROPERTIES

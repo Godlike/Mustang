@@ -5,11 +5,9 @@
 cmake_minimum_required(VERSION 3.4)
 cmake_policy(VERSION 3.4)
 
-project(AssetTest)
+project(CollectionTest)
 
 set(CMAKE_CXX_STANDARD 14)
-
-find_package(Threads)
 
 set(AdditionalCatchParameters
     WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"

@@ -7,6 +7,8 @@
 #include <tulpar/TulparAudio.hpp>
 
 #include <tulpar/internal/BufferCollection.hpp>
+#include <tulpar/internal/Context.hpp>
+#include <tulpar/internal/Device.hpp>
 #include <tulpar/internal/SourceCollection.hpp>
 
 #include <cassert>
@@ -27,15 +29,39 @@ TulparAudio::~TulparAudio()
     Deinitialize();
 }
 
-void TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
+bool TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
 {
     assert(false == m_isInitialized);
 
-    m_buffers.reset(new internal::BufferCollection());
-    m_buffers->Initialize(bufferBatch);
+    m_pDevice = new internal::Device();
+    m_isInitialized = m_pDevice->Initialize();
 
-    m_sources.reset(new internal::SourceCollection(*m_buffers));
-    m_sources->Initialize(sourceBatch);
+    if (m_isInitialized)
+    {
+        m_pContext = new internal::Context();
+        m_isInitialized = m_pContext->Initialize(*m_pDevice);
+
+        if (m_isInitialized)
+        {
+            m_pContext->MakeCurrent();
+
+            m_buffers.reset(new internal::BufferCollection());
+            m_buffers->Initialize(bufferBatch);
+
+            m_sources.reset(new internal::SourceCollection(*m_buffers));
+            m_sources->Initialize(sourceBatch);
+
+            m_isInitialized = true;
+        }
+    }
+
+    if (false == m_isInitialized)
+    {
+        m_isInitialized = true;
+        Deinitialize();
+    }
+
+    return m_isInitialized;
 }
 
 void TulparAudio::Deinitialize()
@@ -44,6 +70,12 @@ void TulparAudio::Deinitialize()
     {
         m_sources.reset();
         m_buffers.reset();
+
+        delete m_pContext;
+        m_pContext = nullptr;
+
+        delete m_pDevice;
+        m_pDevice = nullptr;
 
         m_isInitialized = true;
     }

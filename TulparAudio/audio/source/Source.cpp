@@ -46,6 +46,34 @@ bool Source::Reset()
     return m_parent.lock()->ResetSource(m_handle);
 }
 
+bool Source::Play()
+{
+    assert(IsValid());
+
+    return m_parent.lock()->PlaySource(m_handle);
+}
+
+bool Source::Stop()
+{
+    assert(IsValid());
+
+    return m_parent.lock()->StopSource(m_handle);
+}
+
+bool Source::Rewind()
+{
+    assert(IsValid());
+
+    return m_parent.lock()->RewindSource(m_handle);
+}
+
+bool Source::Pause()
+{
+    assert(IsValid());
+
+    return m_parent.lock()->PauseSource(m_handle);
+}
+
 Source::Source(Handle handle, std::weak_ptr<internal::SourceCollection> parent)
     : m_parent(parent)
     , m_handle(handle)

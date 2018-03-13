@@ -23,6 +23,7 @@ struct OpenAVSourceHandler
 {
     static Collection<audio::Source>::Handles Generate(uint32_t batchSize);
     static void Reclaim(Collection<audio::Source>::Handle handle);
+    static void Delete(Collection<audio::Source>::Handles const& handle);
 };
 
 class BufferCollection;
@@ -38,6 +39,7 @@ public:
     SourceCollection(BufferCollection const& buffers
         , Collection<audio::Source>::HandleGenerator generator = OpenAVSourceHandler::Generate
         , Collection<audio::Source>::HandleReclaimer reclaimer = OpenAVSourceHandler::Reclaim
+        , Collection<audio::Source>::HandleDeleter deleter = OpenAVSourceHandler::Delete
     );
     virtual ~SourceCollection();
 
@@ -45,6 +47,11 @@ public:
     audio::Buffer GetSourceBuffer(SourceHandle source) const;
 
     bool ResetSource(SourceHandle source);
+
+    bool PlaySource(SourceHandle source);
+    bool StopSource(SourceHandle source);
+    bool RewindSource(SourceHandle source);
+    bool PauseSource(SourceHandle source);
 
 protected:
     virtual audio::Source* GenerateObject(SourceHandle handle) const override final;

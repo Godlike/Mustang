@@ -24,6 +24,7 @@ struct OpenAVBufferHandler
 {
     static Collection<audio::Buffer>::Handles Generate(uint32_t batchSize);
     static void Reclaim(Collection<audio::Buffer>::Handle handle);
+    static void Delete(Collection<audio::Buffer>::Handles const& handles);
 };
 
 class BufferCollection
@@ -36,6 +37,7 @@ public:
     BufferCollection(
         Collection<audio::Buffer>::HandleGenerator generator = OpenAVBufferHandler::Generate
         , Collection<audio::Buffer>::HandleReclaimer reclaimer = OpenAVBufferHandler::Reclaim
+        , Collection<audio::Buffer>::HandleDeleter deleter = OpenAVBufferHandler::Delete
     );
 
     virtual ~BufferCollection();

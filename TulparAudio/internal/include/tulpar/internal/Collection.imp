@@ -15,12 +15,23 @@ namespace internal
 {
 
 template<typename T>
-    Collection<T>::Collection(HandleGenerator generator, HandleReclaimer reclaimer)
+    Collection<T>::Collection(
+        HandleGenerator generator
+        , HandleReclaimer reclaimer
+        , HandleDeleter deleter
+    )
         : m_batchSize(1)
         , m_generator(generator)
         , m_reclaimer(reclaimer)
+        , m_deleter(deleter)
 {
 
+}
+
+template<typename T>
+    Collection<T>::~Collection()
+{
+    m_deleter(m_used);
 }
 
 template<typename T>

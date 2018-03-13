@@ -21,6 +21,8 @@ namespace tulpar
 namespace internal
 {
 class BufferCollection;
+class Context;
+class Device;
 class SourceCollection;
 }
 
@@ -35,7 +37,7 @@ public:
 
     ~TulparAudio();
 
-    void Initialize(uint32_t bufferBatch = 32, uint32_t sourceBatch = 32);
+    bool Initialize(uint32_t bufferBatch = 32, uint32_t sourceBatch = 32);
     void Deinitialize();
 
     audio::Source GetSource(audio::Source::Handle handle) const;
@@ -47,6 +49,8 @@ public:
 private:
     bool m_isInitialized;
 
+    internal::Device* m_pDevice;
+    internal::Context* m_pContext;
     std::shared_ptr<internal::BufferCollection> m_buffers;
     std::shared_ptr<internal::SourceCollection> m_sources;
 };

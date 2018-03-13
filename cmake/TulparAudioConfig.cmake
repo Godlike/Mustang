@@ -27,11 +27,15 @@ set(TULPAR_INTERNAL_INCLUDE_DIR
 include(GlmConfig)
 find_package(GLM)
 
+# OpenAL
+find_package(OpenAL REQUIRED)
+
 # STB
 include(stb)
 
 set(TULPAR_EXTERNAL_INCLUDE_DIRS
     ${GLM_INCLUDE_DIR}
+    ${OPENAL_INCLUDE_DIR}
     ${STB_INCLUDE_DIR}
 
     CACHE LIST "Tulpar external include dirs."

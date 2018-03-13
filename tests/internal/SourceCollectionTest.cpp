@@ -28,12 +28,14 @@ void Setup()
     s_bufferCollection.reset(new tulpar::internal::BufferCollection(
         tulpar::tests::internal::IncrementGenerator<tulpar::audio::Buffer>
         , tulpar::tests::internal::DummyReclaimer<tulpar::audio::Buffer>
+        , tulpar::tests::internal::DummyDeleter<tulpar::audio::Buffer>
     ));
 
     s_sourceCollection.reset(new tulpar::internal::SourceCollection(
         *s_bufferCollection.get()
         , tulpar::tests::internal::IncrementGenerator<tulpar::audio::Source>
         , tulpar::tests::internal::DummyReclaimer<tulpar::audio::Source>
+        , tulpar::tests::internal::DummyDeleter<tulpar::audio::Source>
     ));
 }
 

@@ -42,6 +42,12 @@ template<typename T>
 
 }
 
+template<typename T>
+    void DummyDeleter(typename tulpar::internal::Collection<T>::Handles const& handles)
+{
+
+}
+
 }
 }
 }

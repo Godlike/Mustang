@@ -48,6 +48,11 @@ public:
 
     bool Reset();
 
+    bool Play();
+    bool Stop();
+    bool Rewind();
+    bool Pause();
+
 private:
     friend class internal::SourceCollection;
 

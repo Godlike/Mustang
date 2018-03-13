@@ -7,10 +7,13 @@ cmake_minimum_required(VERSION 3.4)
 project(Tulpar)
 
 option(TULPAR_BUILD_DOCUMENTATION "Build Tulpar documentation" OFF)
+option(TULPAR_BUILD_DEMOS "Build Tulpar demos" ON)
 option(TULPAR_BUILD_TESTS "Build Tulpar tests" ON)
 
 message(STATUS "${PROJECT_NAME} configuration:")
 message(STATUS "-- TULPAR_BUILD_DOCUMENTATION: ${TULPAR_BUILD_DOCUMENTATION}")
+message(STATUS "-- TULPAR_BUILD_DEMOS: ${TULPAR_BUILD_DEMOS}")
+message(STATUS "-- TULPAR_BUILD_TESTS: ${TULPAR_BUILD_TESTS}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -31,6 +34,10 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(TulparAudio)
+
+if (TULPAR_BUILD_DEMOS)
+    add_subdirectory(demos)
+endif()
 
 if (TULPAR_BUILD_TESTS)
     enable_testing()
