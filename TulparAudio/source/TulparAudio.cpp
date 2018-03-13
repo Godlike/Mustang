@@ -11,6 +11,9 @@
 #include <tulpar/internal/Device.hpp>
 #include <tulpar/internal/SourceCollection.hpp>
 
+#include <tulpar/InternalLoggers.hpp>
+#include <tulpar/Loggers.hpp>
+
 #include <cassert>
 
 namespace tulpar
@@ -32,6 +35,10 @@ TulparAudio::~TulparAudio()
 bool TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
 {
     assert(false == m_isInitialized);
+
+    Loggers::Instance().Reinitialize();
+
+    LOG->Trace("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) started", bufferBatch, sourceBatch);
 
     m_pDevice = new internal::Device();
     m_isInitialized = m_pDevice->Initialize();
@@ -57,8 +64,14 @@ bool TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
 
     if (false == m_isInitialized)
     {
+        LOG->Error("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) failed", bufferBatch, sourceBatch);
+
         m_isInitialized = true;
         Deinitialize();
+    }
+    else
+    {
+        LOG->Debug("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) done", bufferBatch, sourceBatch);
     }
 
     return m_isInitialized;
@@ -68,6 +81,8 @@ void TulparAudio::Deinitialize()
 {
     if (m_isInitialized)
     {
+        LOG->Trace("TulparAudio::Deinitialize() started");
+
         m_sources.reset();
         m_buffers.reset();
 
@@ -77,7 +92,9 @@ void TulparAudio::Deinitialize()
         delete m_pDevice;
         m_pDevice = nullptr;
 
-        m_isInitialized = true;
+        m_isInitialized = false;
+
+        LOG->Debug("TulparAudio::Deinitialize() done");
     }
 }
 

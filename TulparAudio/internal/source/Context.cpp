@@ -6,7 +6,10 @@
 
 #include <tulpar/internal/Context.hpp>
 
+#include <tulpar/InternalLoggers.hpp>
+
 #include <cassert>
+#include <cstdint>
 #include <cstddef>
 
 namespace tulpar
@@ -17,6 +20,7 @@ namespace internal
 Context::Context()
     : m_isInitialized(false)
     , m_pContext(nullptr)
+    , m_pDevice(nullptr)
 {
 
 }
@@ -30,18 +34,26 @@ bool Context::Initialize(Device& device)
 {
     Deinitialize();
 
-    ALCdevice* pDevice = device.GetOpenALDevice();
+    m_pDevice = device.GetOpenALDevice();
 
-    // flush error flag
-    ALCenum alcErr = alcGetError(pDevice);
+    LOG_AUDIO->Debug("Context::Initialize(device = {:#x}) started", reinterpret_cast<uintptr_t>(m_pDevice));
 
-    m_pContext = alcCreateContext(pDevice, NULL);
+    // clear error state
+    ALCenum alcErr = alcGetError(m_pDevice);
 
-    alcErr = alcGetError(pDevice);
+    m_pContext = alcCreateContext(m_pDevice, NULL);
+
+    alcErr = alcGetError(m_pDevice);
 
     if (ALC_NO_ERROR == alcErr)
     {
         m_isInitialized = true;
+
+        LOG_AUDIO->Debug("Context::Initialize(device = {:#x}) done {:#x}", reinterpret_cast<uintptr_t>(m_pContext));
+    }
+    else
+    {
+        LOG_AUDIO->Error("Context::Initialize(device = {:#x}) failed: {:#x}", reinterpret_cast<uintptr_t>(m_pDevice), alcErr);
     }
 
     return m_isInitialized;
@@ -51,13 +63,25 @@ void Context::Deinitialize()
 {
     if (m_isInitialized)
     {
+        LOG_AUDIO->Debug("Context::Deinitialize() started {:#x}", reinterpret_cast<uintptr_t>(m_pContext));
+
         alcMakeContextCurrent(NULL);
 
-        if (m_pContext)
+        // clear error state
+        ALCenum alcErr = alcGetError(m_pDevice);
+
+        alcDestroyContext(m_pContext);
+
+        alcErr = alcGetError(m_pDevice);
+
+        if (ALC_NO_ERROR != alcErr)
         {
-            alcDestroyContext(m_pContext);
-            m_pContext = nullptr;
+            LOG_AUDIO->Error("Context::Deinitialize() {:#x} failed: {:#x}", reinterpret_cast<uintptr_t>(m_pContext), alcErr);
         }
+
+        LOG_AUDIO->Debug("Context::Deinitialize() done {:#x}", reinterpret_cast<uintptr_t>(m_pContext));
+
+        m_pContext = nullptr;
 
         m_isInitialized = false;
     }
@@ -67,7 +91,19 @@ void Context::MakeCurrent()
 {
     assert(true == m_isInitialized);
 
+    LOG_AUDIO->Debug("Context::MakeCurrent() {:#x}", reinterpret_cast<uintptr_t>(m_pContext));
+
+    // clear error state
+    ALCenum alcErr = alcGetError(m_pDevice);
+
     alcMakeContextCurrent(m_pContext);
+
+    alcErr = alcGetError(m_pDevice);
+
+    if (ALC_NO_ERROR != alcErr)
+    {
+        LOG_AUDIO->Debug("Context::MakeCurrent() {:#x} failed: {:#x}", reinterpret_cast<uintptr_t>(m_pContext), alcErr);
+    }
 }
 
 }

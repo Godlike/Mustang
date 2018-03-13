@@ -31,6 +31,7 @@ private:
     bool m_isInitialized;
 
     ALCcontext* m_pContext;
+    ALCdevice* m_pDevice;
 };
 
 }

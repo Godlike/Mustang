@@ -6,6 +6,8 @@
 
 #include <tulpar/internal/Device.hpp>
 
+#include <tulpar/InternalLoggers.hpp>
+
 #include <cstddef>
 
 namespace tulpar
@@ -27,9 +29,11 @@ Device::~Device()
 
 bool Device::Initialize()
 {
-    Deinitialize();
+    assert(false == m_isInitialized);
 
-    // flush error flag
+    LOG_AUDIO->Debug("Device::Initialize() started");
+
+    // clear error state
     ALCenum alcErr = alcGetError(NULL);
 
     m_pDevice = alcOpenDevice(NULL);
@@ -39,6 +43,12 @@ bool Device::Initialize()
     if (ALC_NO_ERROR == alcErr)
     {
         m_isInitialized = true;
+
+        LOG_AUDIO->Debug("Device::Initialize() done {:#x}", reinterpret_cast<uintptr_t>(m_pDevice));
+    }
+    else
+    {
+        LOG_AUDIO->Error("Device::Initialize() failed: {:#x}", alcErr);
     }
 
     return m_isInitialized;
@@ -48,11 +58,21 @@ void Device::Deinitialize()
 {
     if (m_isInitialized)
     {
-        if (m_pDevice)
+        LOG_AUDIO->Debug("Device::Deinitialize() started {:#x}", reinterpret_cast<uintptr_t>(m_pDevice));
+
+        // clear error state
+        ALCenum alcErr = alcGetError(m_pDevice);
+
+        alcCloseDevice(m_pDevice);
+
+        alcErr = alcGetError(m_pDevice);
+
+        if (ALC_NO_ERROR != alcErr)
         {
-            alcCloseDevice(m_pDevice);
-            m_pDevice = nullptr;
+            LOG_AUDIO->Error("Device::Deinitialize() {:#x} failed: {:#x}", reinterpret_cast<uintptr_t>(m_pDevice), alcErr);
         }
+
+        m_pDevice = nullptr;
 
         m_isInitialized = false;
     }

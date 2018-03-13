@@ -6,6 +6,8 @@
 
 #include <tulpar/internal/BufferCollection.hpp>
 
+#include <tulpar/InternalLoggers.hpp>
+
 #include <AL/al.h>
 
 #undef STB_VORBIS_HEADER_ONLY
@@ -20,11 +22,24 @@ namespace internal
 
 Collection<audio::Buffer>::Handles OpenAVBufferHandler::Generate(uint32_t batchSize)
 {
+    LOG_AUDIO->Trace("Generating {} buffers...", batchSize);
+
     Collection<audio::Buffer>::Handles result;
     result.reserve(batchSize);
 
     ALuint* alBuffers = new ALuint[batchSize];
+
+    // clear error state
+    ALenum alErr = alGetError();
+
     alGenBuffers(batchSize, alBuffers);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Generating {} buffers: {:#x}", batchSize, alErr);
+    }
 
     std::transform(
         alBuffers
@@ -48,6 +63,8 @@ void OpenAVBufferHandler::Reclaim(Collection<audio::Buffer>::Handle /*handle*/)
 
 void OpenAVBufferHandler::Delete(Collection<audio::Buffer>::Handles const& handles)
 {
+    LOG_AUDIO->Trace("Deleting {} buffers...", handles.size());
+
     ALuint* alBuffers = new ALuint[handles.size()];
 
     std::transform(
@@ -60,7 +77,17 @@ void OpenAVBufferHandler::Delete(Collection<audio::Buffer>::Handles const& handl
         }
     );
 
+    // clear error state
+    ALenum alErr = alGetError();
+
     alDeleteBuffers(handles.size(), alBuffers);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Deleting {} buffers: {:#x}", handles.size(), alErr);
+    }
 
     delete[] alBuffers;
 }
@@ -83,6 +110,8 @@ BufferCollection::~BufferCollection()
 void BufferCollection::SetBufferName(Handle handle, std::string const& name)
 {
     m_bufferNames[handle] = name;
+
+    LOG_AUDIO->Debug("Buffer #{}: name = {}", handle, name.c_str());
 }
 
 std::string BufferCollection::GetBufferName(Handle handle) const
@@ -95,6 +124,8 @@ std::string BufferCollection::GetBufferName(Handle handle) const
 bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& content)
 {
     ALuint index = static_cast<ALuint>(handle);
+
+    LOG_AUDIO->Trace("Buffer #{}: parsing data with STB...", handle);
 
     int error = 0;
     stb_vorbis* pVorbis = stb_vorbis_open_memory(content.GetBuffer().data(), content.GetSize(), &error, NULL);
@@ -112,7 +143,15 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
             , sampleCount
         );
 
-        // flush error flag
+        LOG_AUDIO->Debug(
+            "Buffer #{}: channels: {}; samples: {}; rate: {}"
+            , handle
+            , vorbisInfo.channels
+            , sampleCount
+            , vorbisInfo.sample_rate
+        );
+
+        // clear error state
         ALenum alErr = alGetError();
 
         alBufferData(index
@@ -124,6 +163,11 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
 
         alErr = alGetError();
 
+        if (AL_NO_ERROR != alErr)
+        {
+            LOG_AUDIO->Warning("Buffer #{}: binding data to OpenAL: {:#x}", handle, alErr);
+        }
+
         delete[] pSampleBuffer;
         stb_vorbis_close(pVorbis);
 
@@ -131,12 +175,16 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
     }
     else // if open_memory indicated some error, we don't have to close any resources
     {
+        LOG_AUDIO->Error("Buffer #{}: couldn't parse data", handle);
+
         return false;
     }
 }
 
 bool BufferCollection::ResetBuffer(Handle handle)
 {
+    LOG_AUDIO->Trace("Buffer #{}: reset", handle);
+
     Reclaim(handle);
 
     m_bufferNames.erase(handle);

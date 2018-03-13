@@ -13,6 +13,8 @@
 #include <tulpar/audio/Buffer.hpp>
 #include <tulpar/audio/Source.hpp>
 
+#include <tulpar/Loggers.hpp>
+
 #include <mule/MuleUtilities.hpp>
 
 #include <mule/asset/Handler.hpp>
@@ -38,13 +40,25 @@ int main()
             mule::Loggers::Settings{
                 std::string()
                 , std::string("%+")
-                , mule::LogLevel::trace
+                , mule::LogLevel::info
                 , { ansiSink }
             }
         );
     }
 
     mule::MuleUtilities::Initialize();
+
+    {
+        tulpar::Loggers::Instance().SetDefaultSettings(
+            mule::Loggers::Settings{
+                std::string()
+                , std::string("%+")
+                , mule::LogLevel::trace
+                , { ansiSink }
+            }
+        );
+    }
+
     tulpar::TulparAudio audio;
 
     bool success = true;
