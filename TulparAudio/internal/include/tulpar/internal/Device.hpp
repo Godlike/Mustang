@@ -9,6 +9,8 @@
 
 #include <AL/alc.h>
 
+#include <tulpar/TulparConfigurator.hpp>
+
 namespace tulpar
 {
 namespace internal
@@ -17,15 +19,17 @@ namespace internal
 class Device
 {
 public:
-    Device();
+    static Device* Create(TulparConfigurator::Device const& config);
     ~Device();
-
-    bool Initialize();
-    void Deinitialize();
 
     ALCdevice* GetOpenALDevice() const { return m_pDevice; }
 
 private:
+    Device();
+
+    bool Initialize(std::string const& name);
+    void Deinitialize();
+
     bool m_isInitialized;
 
     ALCdevice* m_pDevice;

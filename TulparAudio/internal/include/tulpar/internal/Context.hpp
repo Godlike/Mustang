@@ -19,15 +19,17 @@ namespace internal
 class Context
 {
 public:
-    Context();
+    static Context* Create(Device const& device);
     ~Context();
-
-    bool Initialize(Device& device);
-    void Deinitialize();
 
     void MakeCurrent();
 
 private:
+    Context();
+
+    bool Initialize(Device const& device);
+    void Deinitialize();
+
     bool m_isInitialized;
 
     ALCcontext* m_pContext;

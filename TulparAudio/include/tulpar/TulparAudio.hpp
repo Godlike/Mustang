@@ -7,13 +7,16 @@
 #ifndef TULPAR_TULPAR_AUDIO_HPP
 #define TULPAR_TULPAR_AUDIO_HPP
 
+#include <tulpar/TulparConfigurator.hpp>
+
 #include <tulpar/audio/Buffer.hpp>
 #include <tulpar/audio/Source.hpp>
 
 #include <mule/asset/Handler.hpp>
 
-#include <vector>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace tulpar
 {
@@ -37,7 +40,7 @@ public:
 
     ~TulparAudio();
 
-    bool Initialize(uint32_t bufferBatch = 32, uint32_t sourceBatch = 32);
+    bool Initialize(TulparConfigurator const& config);
     void Deinitialize();
 
     audio::Source GetSource(audio::Source::Handle handle) const;
@@ -49,8 +52,8 @@ public:
 private:
     bool m_isInitialized;
 
-    internal::Device* m_pDevice;
-    internal::Context* m_pContext;
+    std::shared_ptr<internal::Device> m_device;
+    std::shared_ptr<internal::Context> m_context;
     std::shared_ptr<internal::BufferCollection> m_buffers;
     std::shared_ptr<internal::SourceCollection> m_sources;
 };

@@ -9,6 +9,7 @@
 #endif
 
 #include <tulpar/TulparAudio.hpp>
+#include <tulpar/TulparConfigurator.hpp>
 
 #include <tulpar/audio/Buffer.hpp>
 #include <tulpar/audio/Source.hpp>
@@ -57,13 +58,20 @@ int main()
                 , { ansiSink }
             }
         );
+
+        tulpar::Loggers::Instance().Reinitialize();
     }
+
+    auto devices = tulpar::TulparConfigurator::GetDevices();
+
+    tulpar::TulparConfigurator tulparConfig;
+    tulparConfig.device = devices.front();
 
     tulpar::TulparAudio audio;
 
     bool success = true;
 
-    success == audio.Initialize();
+    success == audio.Initialize(tulparConfig);
 
     if (success)
     {

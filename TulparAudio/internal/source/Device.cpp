@@ -15,11 +15,20 @@ namespace tulpar
 namespace internal
 {
 
-Device::Device()
-    : m_isInitialized(false)
-    , m_pDevice(nullptr)
+Device* Device::Create(TulparConfigurator::Device const& config)
 {
+    Device* obj = new Device();
 
+    if (obj->Initialize(config.name))
+    {
+        return obj;
+    }
+    else
+    {
+        delete obj;
+
+        return nullptr;
+    }
 }
 
 Device::~Device()
@@ -27,16 +36,23 @@ Device::~Device()
     Deinitialize();
 }
 
-bool Device::Initialize()
+Device::Device()
+    : m_isInitialized(false)
+    , m_pDevice(nullptr)
+{
+
+}
+
+bool Device::Initialize(std::string const& name)
 {
     assert(false == m_isInitialized);
 
-    LOG_AUDIO->Debug("Device::Initialize() started");
+    LOG_AUDIO->Debug("Device::Initialize({}) started", name.c_str());
 
     // clear error state
     ALCenum alcErr = alcGetError(NULL);
 
-    m_pDevice = alcOpenDevice(NULL);
+    m_pDevice = alcOpenDevice(name.empty() ? NULL : name.c_str());
 
     alcErr = alcGetError(m_pDevice);
 
@@ -44,11 +60,11 @@ bool Device::Initialize()
     {
         m_isInitialized = true;
 
-        LOG_AUDIO->Debug("Device::Initialize() done {:#x}", reinterpret_cast<uintptr_t>(m_pDevice));
+        LOG_AUDIO->Debug("Device::Initialize({}) done {:#x}", name.c_str(), reinterpret_cast<uintptr_t>(m_pDevice));
     }
     else
     {
-        LOG_AUDIO->Error("Device::Initialize() failed: {:#x}", alcErr);
+        LOG_AUDIO->Error("Device::Initialize({}) failed: {:#x}", name.c_str(), alcErr);
     }
 
     return m_isInitialized;

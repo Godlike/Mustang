@@ -32,31 +32,27 @@ TulparAudio::~TulparAudio()
     Deinitialize();
 }
 
-bool TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
+bool TulparAudio::Initialize(TulparConfigurator const& config)
 {
     assert(false == m_isInitialized);
 
-    Loggers::Instance().Reinitialize();
+    LOG->Trace("TulparAudio::Initialize({}) started", config);
 
-    LOG->Trace("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) started", bufferBatch, sourceBatch);
+    m_device.reset(internal::Device::Create(config.device));
 
-    m_pDevice = new internal::Device();
-    m_isInitialized = m_pDevice->Initialize();
-
-    if (m_isInitialized)
+    if (nullptr != m_device.get())
     {
-        m_pContext = new internal::Context();
-        m_isInitialized = m_pContext->Initialize(*m_pDevice);
+        m_context.reset(internal::Context::Create(*m_device));
 
-        if (m_isInitialized)
+        if (nullptr != m_context.get())
         {
-            m_pContext->MakeCurrent();
+            m_context->MakeCurrent();
 
             m_buffers.reset(new internal::BufferCollection());
-            m_buffers->Initialize(bufferBatch);
+            m_buffers->Initialize(config.bufferBatch);
 
             m_sources.reset(new internal::SourceCollection(*m_buffers));
-            m_sources->Initialize(sourceBatch);
+            m_sources->Initialize(config.sourceBatch);
 
             m_isInitialized = true;
         }
@@ -64,14 +60,14 @@ bool TulparAudio::Initialize(uint32_t bufferBatch, uint32_t sourceBatch)
 
     if (false == m_isInitialized)
     {
-        LOG->Error("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) failed", bufferBatch, sourceBatch);
+        LOG->Error("TulparAudio::Initialize() failed");
 
         m_isInitialized = true;
         Deinitialize();
     }
     else
     {
-        LOG->Debug("TulparAudio::Initialize(bufferBatch = {}, sourceBatch = {}) done", bufferBatch, sourceBatch);
+        LOG->Debug("TulparAudio::Initialize() done");
     }
 
     return m_isInitialized;
@@ -86,11 +82,8 @@ void TulparAudio::Deinitialize()
         m_sources.reset();
         m_buffers.reset();
 
-        delete m_pContext;
-        m_pContext = nullptr;
-
-        delete m_pDevice;
-        m_pDevice = nullptr;
+        m_context.reset();
+        m_device.reset();
 
         m_isInitialized = false;
 

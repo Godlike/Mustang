@@ -67,12 +67,14 @@ set(TULPAR_AUDIO_HEADERS
     include/tulpar/Loggers.hpp
 
     include/tulpar/TulparAudio.hpp
+    include/tulpar/TulparConfigurator.hpp
 )
 
 set(TULPAR_AUDIO_SOURCES
     source/Loggers.cpp
 
     source/TulparAudio.cpp
+    source/TulparConfigurator.cpp
 )
 
 set(TULPAR_AUDIO_EXTRA)
