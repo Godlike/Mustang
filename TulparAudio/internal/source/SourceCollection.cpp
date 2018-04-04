@@ -13,6 +13,7 @@
 #include <AL/al.h>
 
 #include <algorithm>
+#include <limits>
 
 namespace tulpar
 {
@@ -125,7 +126,42 @@ SourceCollection::~SourceCollection()
 
 }
 
-void SourceCollection::BindBuffer(SourceHandle source, BufferHandle buffer)
+audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
+{
+    audio::Buffer buffer;
+
+    switch (GetSourceType(source))
+    {
+        case audio::Source::Type::Static:
+        {
+            buffer = GetSourceStaticBuffer(source);
+
+            break;
+        }
+        case audio::Source::Type::Streaming:
+        {
+            std::vector<audio::Buffer> queue = GetSourceQueuedBuffers(source);
+            buffer = queue[GetSourceQueueIndex(source)];
+
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    return buffer;
+}
+
+audio::Buffer SourceCollection::GetSourceStaticBuffer(SourceHandle source) const
+{
+    assert(m_sourceBuffers.cend() != m_sourceBuffers.find(source));
+
+    return m_buffers.Get(m_sourceBuffers.at(source));
+}
+
+bool SourceCollection::SetSourceStaticBuffer(SourceHandle source, BufferHandle buffer)
 {
     LOG_AUDIO->Debug("Source #{}: buffer = #{}", source, buffer);
 
@@ -141,17 +177,117 @@ void SourceCollection::BindBuffer(SourceHandle source, BufferHandle buffer)
 
     alErr = alGetError();
 
-    if (AL_NO_ERROR != alErr)
+    if (AL_NO_ERROR == alErr)
+    {
+        m_sourceQueuedBuffers[source].clear();
+    }
+    else
     {
         LOG_AUDIO->Warning("Source #{}: buffer = #{}: {:#x}", source, buffer, alErr);
     }
+
+    return AL_NO_ERROR == alErr;
 }
 
-audio::Buffer SourceCollection::GetSourceBuffer(SourceHandle source) const
+std::vector<audio::Buffer> SourceCollection::GetSourceQueuedBuffers(SourceHandle source) const
 {
-    assert(m_sourceBuffers.cend() != m_sourceBuffers.find(source));
+    std::vector<audio::Buffer> result;
 
-    return m_buffers.Get(m_sourceBuffers.at(source));
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint alQueueLength;
+    alGetSourcei(static_cast<ALuint>(source), AL_BUFFERS_QUEUED, &alQueueLength);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        if (alQueueLength > 0)
+        {
+            std::vector<BufferHandle> const& queue = m_sourceQueuedBuffers.at(source);
+
+            assert(static_cast<size_t>(alQueueLength) == queue.size());
+
+            result.resize(alQueueLength);
+
+            std::transform(
+                queue.cbegin()
+                , queue.cbegin() + static_cast<size_t>(alQueueLength)
+                , result.begin()
+                , [&](BufferHandle const& handle) -> audio::Buffer
+                {
+                    return m_buffers.Get(handle);
+                }
+            );
+        }
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: get buffer queue: {:#x}", source, alErr);
+    }
+
+    return result;
+}
+
+uint32_t SourceCollection::GetSourceQueueIndex(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint alQueueIndex;
+    alGetSourcei(static_cast<ALuint>(source), AL_BUFFERS_PROCESSED, &alQueueIndex);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: get buffer queue index: {:#x}", source, alErr);
+        alQueueIndex = 0;
+    }
+
+    return alQueueIndex;
+}
+
+bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio::Buffer> const& buffers)
+{
+    LOG_AUDIO->Debug("Source #{}: set buffer queue[{}]", source, buffers.size());
+
+    std::vector<ALuint> tmp(buffers.size(), 0);
+
+    std::transform(buffers.begin(), buffers.end(), tmp.begin(),
+        [](audio::Buffer const& buffer) -> ALuint
+        {
+            return static_cast<ALuint>(buffer.GetHandle());
+        }
+    );
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourceQueueBuffers(static_cast<ALuint>(source), tmp.size(), tmp.data());
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        std::vector<BufferHandle>& queue = m_sourceQueuedBuffers[source];
+
+        queue.resize(buffers.size());
+
+        std::transform(buffers.begin(), buffers.end(), queue.begin(),
+            [](audio::Buffer const& buffer) -> BufferHandle
+            {
+                return buffer.GetHandle();
+            }
+        );
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: set buffer queue[{}]: {:#x}", source, tmp.size(), alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
 }
 
 bool SourceCollection::ResetSource(SourceHandle source)
@@ -161,6 +297,7 @@ bool SourceCollection::ResetSource(SourceHandle source)
     Reclaim(source);
 
     m_sourceBuffers.erase(source);
+    m_sourceQueuedBuffers.erase(source);
 
     return true;
 }
@@ -186,6 +323,8 @@ bool SourceCollection::PlaySource(SourceHandle source)
 
 bool SourceCollection::StopSource(SourceHandle source)
 {
+    LOG_AUDIO->Debug("Source #{}: stop", source);
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -203,6 +342,8 @@ bool SourceCollection::StopSource(SourceHandle source)
 
 bool SourceCollection::RewindSource(SourceHandle source)
 {
+    LOG_AUDIO->Debug("Source #{}: rewind", source);
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -220,6 +361,8 @@ bool SourceCollection::RewindSource(SourceHandle source)
 
 bool SourceCollection::PauseSource(SourceHandle source)
 {
+    LOG_AUDIO->Debug("Source #{}: pause", source);
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -235,6 +378,439 @@ bool SourceCollection::PauseSource(SourceHandle source)
     return AL_NO_ERROR == alErr;
 }
 
+std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandle source) const
+{
+    std::chrono::nanoseconds result(0);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint sampleOffset;
+    alGetSourcei(static_cast<ALuint>(source), AL_SAMPLE_OFFSET, &sampleOffset);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        audio::Source::State const state = GetSourceState(source);
+
+        if (sampleOffset > 0
+            && ((audio::Source::State::Playing == state)
+                || (audio::Source::State::Paused == state))
+        )
+        {
+            // @todo: fix calculation for queued buffers of different frequencies
+
+            audio::Buffer buffer = GetSourceActiveBuffer(source);
+
+            // time in seconds
+            double time = static_cast<double>(sampleOffset) / static_cast<double>(buffer.GetFrequencyHz());
+            // convert to nanoseconds
+            time *= 1e9;
+
+            result = std::chrono::nanoseconds(static_cast<uint64_t>(std::round(time)));
+        }
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: get playback position: {:#x}", source, alErr);
+    }
+
+    return result;
+}
+
+bool SourceCollection::SetSourcePlaybackPosition(SourceHandle source, std::chrono::nanoseconds offset)
+{
+    LOG_AUDIO->Debug("Source #{}: set playback position {}ns", source, offset.count());
+
+    // @todo: fix calculation for queued buffers of different frequencies
+
+    audio::Buffer buffer = GetSourceActiveBuffer(source);
+
+    // time in nanoseconds
+    double time = offset.count();
+    // convert to seconds
+    time *= 1e-9;
+
+    ALint sampleOffset = buffer.GetFrequencyHz() * time;
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcei(static_cast<ALuint>(source), AL_SAMPLE_OFFSET, sampleOffset);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set playback position: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+float SourceCollection::GetSourcePlaybackProgress(SourceHandle source) const
+{
+    float result = 0.0f;
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint sampleOffset;
+    alGetSourcei(static_cast<ALuint>(source), AL_SAMPLE_OFFSET, &sampleOffset);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        audio::Source::State const state = GetSourceState(source);
+
+        if (sampleOffset > 0
+            && ((audio::Source::State::Playing == state)
+                || (audio::Source::State::Paused == state))
+        )
+        {
+            // @todo: fix calculation for queued buffers of different frequencies
+
+            audio::Buffer buffer = GetSourceActiveBuffer(source);
+
+            result = static_cast<float>(sampleOffset) / static_cast<float>(buffer.GetSampleCount());
+        }
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: get playback progress: {:#x}", source, alErr);
+    }
+
+    return result;
+}
+
+bool SourceCollection::SetSourcePlaybackProgress(SourceHandle source, float value)
+{
+    LOG_AUDIO->Debug("Source #{}: set playback progress {}%", source, value);
+
+    // @todo: fix calculation for queued buffers of different frequencies
+
+    audio::Buffer buffer = GetSourceActiveBuffer(source);
+
+    ALint sampleOffset = std::round(static_cast<float>(buffer.GetSampleCount()) * value);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcei(static_cast<ALuint>(source), AL_SAMPLE_OFFSET, sampleOffset);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set playback progress: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+audio::Source::State SourceCollection::GetSourceState(SourceHandle source) const
+{
+    audio::Source::State state = audio::Source::State::Unknown;
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint alState;
+    alGetSourcei(static_cast<ALuint>(source), AL_SOURCE_STATE, &alState);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        using audio::Source;
+
+        switch (alState)
+        {
+            case AL_INITIAL:
+            {
+                state = Source::State::Initial;
+                break;
+            }
+            case AL_PLAYING:
+            {
+                state = Source::State::Playing;
+                break;
+            }
+            case AL_PAUSED:
+            {
+                state = Source::State::Paused;
+                break;
+            }
+            case AL_STOPPED:
+            {
+                state = Source::State::Stopped;
+                break;
+            }
+            default:
+            {
+                state = Source::State::Unknown;
+                break;
+            }
+        }
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: get state: {:#x}", source, alErr);
+    }
+
+    return state;
+}
+
+audio::Source::Type SourceCollection::GetSourceType(SourceHandle source) const
+{
+    audio::Source::Type type = audio::Source::Type::Unknown;
+
+    // clear error type
+    ALenum alErr = alGetError();
+
+    ALint alType;
+    alGetSourcei(static_cast<ALuint>(source), AL_SOURCE_TYPE, &alType);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR == alErr)
+    {
+        using audio::Source;
+
+        switch (alType)
+        {
+            case AL_UNDETERMINED:
+            {
+                type = Source::Type::Undetermined;
+                break;
+            }
+            case AL_STATIC:
+            {
+                type = Source::Type::Static;
+                break;
+            }
+            case AL_STREAMING:
+            {
+                type = Source::Type::Streaming;
+                break;
+            }
+            default:
+            {
+                type = Source::Type::Unknown;
+                break;
+            }
+        }
+    }
+    else
+    {
+        LOG_AUDIO->Warning("Source #{}: get type: {:#x}", source, alErr);
+    }
+
+    return type;
+}
+
+bool SourceCollection::IsSourceRelative(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint result = AL_FALSE;
+
+    alGetSourcei(static_cast<ALuint>(source), AL_SOURCE_RELATIVE, &result);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        result = AL_FALSE;
+        LOG_AUDIO->Warning("Source #{}: get relative: {:#x}", source, alErr);
+    }
+
+    return result == AL_TRUE;
+}
+
+bool SourceCollection::SetSourceRelative(SourceHandle source, bool flag)
+{
+    LOG_AUDIO->Debug("Source #{}: set relative {}", source, flag);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcei(static_cast<ALuint>(source), AL_SOURCE_RELATIVE, (flag ? AL_TRUE : AL_FALSE));
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set relative: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+bool SourceCollection::IsSourceLooping(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALint result = AL_FALSE;
+
+    alGetSourcei(static_cast<ALuint>(source), AL_LOOPING, &result);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        result = AL_FALSE;
+        LOG_AUDIO->Warning("Source #{}: get looping: {:#x}", source, alErr);
+    }
+
+    return result == AL_TRUE;
+}
+
+bool SourceCollection::SetSourceLooping(SourceHandle source, bool flag)
+{
+    LOG_AUDIO->Debug("Source #{}: set looping {}", source, flag);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcei(static_cast<ALuint>(source), AL_LOOPING, (flag ? AL_TRUE : AL_FALSE));
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set looping: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+float SourceCollection::GetSourcePitch(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALfloat result = 0.0f;
+
+    alGetSourcef(static_cast<ALuint>(source), AL_PITCH, &result);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        result = -1.0f;
+        LOG_AUDIO->Warning("Source #{}: get pitch: {:#x}", source, alErr);
+    }
+
+    return result;
+}
+
+bool SourceCollection::SetSourcePitch(SourceHandle source, float value)
+{
+    LOG_AUDIO->Debug("Source #{}: set pitch {}", source, value);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcef(static_cast<ALuint>(source), AL_PITCH, value);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set pitch: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+float SourceCollection::GetSourceGain(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALfloat result = 0.0f;
+
+    alGetSourcef(static_cast<ALuint>(source), AL_GAIN, &result);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        result = -1.0f;
+        LOG_AUDIO->Warning("Source #{}: get gain: {:#x}", source, alErr);
+    }
+
+    return result;
+}
+
+bool SourceCollection::SetSourceGain(SourceHandle source, float value)
+{
+    LOG_AUDIO->Debug("Source #{}: set gain {}", source, value);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSourcef(static_cast<ALuint>(source), AL_GAIN, value);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set gain: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
+std::array<float, 3> SourceCollection::GetSourcePosition(SourceHandle source) const
+{
+    // clear error state
+    ALenum alErr = alGetError();
+
+    ALfloat x;
+    ALfloat y;
+    ALfloat z;
+
+    alGetSource3f(static_cast<ALuint>(source), AL_POSITION, &x, &y, &z);
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: get position: {:#x}", source, alErr);
+
+        x = std::numeric_limits<float>::quiet_NaN();
+        y = std::numeric_limits<float>::quiet_NaN();
+        z = std::numeric_limits<float>::quiet_NaN();
+    }
+
+    return {{ static_cast<float>(x), static_cast<float>(y), static_cast<float>(z) }};
+}
+
+bool SourceCollection::SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec)
+{
+    LOG_AUDIO->Debug("Source #{}: set position {{ {}, {}, {} }}", source, vec[0], vec[1], vec[2]);
+
+    // clear error state
+    ALenum alErr = alGetError();
+
+    alSource3f(static_cast<ALuint>(source), AL_POSITION, static_cast<ALfloat>(vec[0]), static_cast<ALfloat>(vec[1]), static_cast<ALfloat>(vec[2]));
+
+    alErr = alGetError();
+
+    if (AL_NO_ERROR != alErr)
+    {
+        LOG_AUDIO->Warning("Source #{}: set position: {:#x}", source, alErr);
+    }
+
+    return AL_NO_ERROR == alErr;
+}
+
 audio::Source* SourceCollection::GenerateObject(SourceHandle source) const
 {
     return new audio::Source(source, const_cast<SourceCollection*>(this)->shared_from_this());
@@ -243,6 +819,7 @@ audio::Source* SourceCollection::GenerateObject(SourceHandle source) const
 audio::Source* SourceCollection::CreateObject(SourceHandle source)
 {
     m_sourceBuffers.erase(source);
+    m_sourceQueuedBuffers.erase(source);
 
     return GenerateObject(source);
 }

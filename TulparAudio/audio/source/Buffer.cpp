@@ -43,6 +43,34 @@ std::string Buffer::GetDataName() const
     return m_parent.lock()->GetBufferName(m_handle);
 }
 
+uint8_t Buffer::GetChannelCount() const
+{
+    assert(IsValid());
+
+    return m_parent.lock()->GetBufferChannelCount(m_handle);
+}
+
+uint32_t Buffer::GetFrequencyHz() const
+{
+    assert(IsValid());
+
+    return m_parent.lock()->GetBufferFrequencyHz(m_handle);
+}
+
+uint32_t Buffer::GetSampleCount() const
+{
+    assert(IsValid());
+
+    return m_parent.lock()->GetBufferSampleCount(m_handle);
+}
+
+std::chrono::seconds Buffer::GetDuration() const
+{
+    assert(IsValid());
+
+    return m_parent.lock()->GetBufferDuration(m_handle);
+}
+
 bool Buffer::Reset()
 {
     assert(IsValid());

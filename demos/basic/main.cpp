@@ -71,7 +71,7 @@ int main()
 
     bool success = true;
 
-    success == audio.Initialize(tulparConfig);
+    success = audio.Initialize(tulparConfig);
 
     if (success)
     {
@@ -84,18 +84,64 @@ int main()
 
         if (success)
         {
+            using namespace std::chrono_literals;
+
             tulpar::audio::Source source = audio.SpawnSource();
-            source.BindBuffer(buffer);
+            source.SetLooping(false);
 
-            success = source.Play();
-
-            std::cout << (success ? "playing" : "failed to play") << std::endl;
-
-            if (success)
             {
-                using namespace std::chrono_literals;
+                source.SetStaticBuffer(buffer);
+                success = source.Play();
 
-                std::this_thread::sleep_for(1s);
+                while (tulpar::audio::Source::State::Stopped != source.GetState())
+                {
+                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
+                    std::cout << "Progress: " << source.GetPlaybackProgress();
+                    std::cout << std::endl;
+
+                    std::this_thread::sleep_for(100ms);
+                }
+            }
+
+            {
+                source.ResetBuffer();
+                source.QueueBuffers({{ buffer, buffer, buffer }});
+
+                float pitch = 1.0f;
+                source.SetPitch(pitch);
+
+                float delta = 0.05f;
+                float factor = -1;
+
+                float x = -0.3f;
+
+                source.Play();
+
+                while (tulpar::audio::Source::State::Stopped != source.GetState())
+                {
+                    pitch += factor * delta;
+                    x += delta * 1e-1;
+
+                    if (pitch <= 0.0f)
+                    {
+                        pitch = 0.0f;
+                        factor = -factor;
+                    }
+                    else if (pitch >= 1.0f)
+                    {
+                        pitch = 1.0f;
+                        factor = -factor;
+                    }
+
+                    source.SetPitch(std::max(pitch, 0.0f));
+                    source.SetPosition({{ x, 0.0f, 0.0f }});
+
+                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
+                    std::cout << "Progress: " << source.GetPlaybackProgress();
+                    std::cout << std::endl;
+
+                    std::this_thread::sleep_for(20ms);
+                }
             }
         }
 

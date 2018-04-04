@@ -9,8 +9,10 @@
 
 #include <mule/asset/Handler.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace tulpar
 {
@@ -45,6 +47,11 @@ public:
 
     bool BindData(mule::asset::Handler asset);
     std::string GetDataName() const;
+
+    uint8_t GetChannelCount() const;
+    uint32_t GetFrequencyHz() const;
+    uint32_t GetSampleCount() const;
+    std::chrono::seconds GetDuration() const;
 
     bool Reset();
 

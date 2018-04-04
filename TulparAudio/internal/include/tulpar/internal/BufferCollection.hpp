@@ -13,7 +13,13 @@
 
 #include <mule/asset/Content.hpp>
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <unordered_map>
+
+using namespace std::chrono_literals;
 
 namespace tulpar
 {
@@ -42,19 +48,35 @@ public:
 
     virtual ~BufferCollection();
 
-    void SetBufferName(Handle handle, std::string const& name);
     std::string GetBufferName(Handle handle) const;
+    void SetBufferName(Handle handle, std::string const& name);
+
+    uint8_t GetBufferChannelCount(Handle handle) const;
+    uint32_t GetBufferFrequencyHz(Handle handle) const;
+    uint32_t GetBufferSampleCount(Handle handle) const;
+    std::chrono::seconds GetBufferDuration(Handle handle) const;
 
     bool SetBufferData(Handle handle, mule::asset::Content const& content);
 
     bool ResetBuffer(Handle handle);
+
+    uint32_t GetFrequency(Handle handle) const;
 
 protected:
     virtual audio::Buffer* GenerateObject(Handle handle) const override final;
     virtual audio::Buffer* CreateObject(Handle handle) override final;
 
 private:
-    std::unordered_map<Handle, std::string> m_bufferNames;
+    struct BufferInfo
+    {
+        std::string name                = std::string();
+        uint8_t channels                = 0;
+        uint32_t frequencyHz            = 0;
+        uint32_t sampleCount            = 0;
+        std::chrono::seconds duration   = 0s;
+    };
+
+    std::unordered_map<Handle, BufferInfo> m_bufferInfo;
 };
 
 }

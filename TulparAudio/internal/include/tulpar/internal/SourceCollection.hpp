@@ -12,7 +12,10 @@
 #include <tulpar/audio/Buffer.hpp>
 #include <tulpar/audio/Source.hpp>
 
+#include <array>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace tulpar
 {
@@ -43,8 +46,14 @@ public:
     );
     virtual ~SourceCollection();
 
-    void BindBuffer(SourceHandle source, BufferHandle buffer);
-    audio::Buffer GetSourceBuffer(SourceHandle source) const;
+    audio::Buffer GetSourceActiveBuffer(SourceHandle source) const;
+
+    audio::Buffer GetSourceStaticBuffer(SourceHandle source) const;
+    bool SetSourceStaticBuffer(SourceHandle source, BufferHandle buffer);
+
+    std::vector<audio::Buffer> GetSourceQueuedBuffers(SourceHandle source) const;
+    uint32_t GetSourceQueueIndex(SourceHandle source) const;
+    bool QueueSourceBuffers(SourceHandle source, std::vector<audio::Buffer> const& buffers);
 
     bool ResetSource(SourceHandle source);
 
@@ -52,6 +61,30 @@ public:
     bool StopSource(SourceHandle source);
     bool RewindSource(SourceHandle source);
     bool PauseSource(SourceHandle source);
+
+    std::chrono::nanoseconds GetSourcePlaybackPosition(SourceHandle source) const;
+    bool SetSourcePlaybackPosition(SourceHandle source, std::chrono::nanoseconds offset);
+
+    float GetSourcePlaybackProgress(SourceHandle source) const;
+    bool SetSourcePlaybackProgress(SourceHandle source, float value);
+
+    audio::Source::State GetSourceState(SourceHandle source) const;
+    audio::Source::Type GetSourceType(SourceHandle source) const;
+
+    bool IsSourceRelative(SourceHandle source) const;
+    bool SetSourceRelative(SourceHandle source, bool flag);
+
+    bool IsSourceLooping(SourceHandle source) const;
+    bool SetSourceLooping(SourceHandle source, bool flag);
+
+    float GetSourcePitch(SourceHandle source) const;
+    bool SetSourcePitch(SourceHandle source, float value);
+
+    float GetSourceGain(SourceHandle source) const;
+    bool SetSourceGain(SourceHandle source, float value);
+
+    std::array<float, 3> GetSourcePosition(SourceHandle source) const;
+    bool SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec);
 
 protected:
     virtual audio::Source* GenerateObject(SourceHandle handle) const override final;
@@ -61,6 +94,7 @@ private:
     BufferCollection const& m_buffers;
 
     std::unordered_map<SourceHandle, BufferHandle> m_sourceBuffers;
+    std::unordered_map<SourceHandle, std::vector<BufferHandle>> m_sourceQueuedBuffers;
 };
 
 }

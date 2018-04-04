@@ -107,18 +107,46 @@ BufferCollection::~BufferCollection()
 
 }
 
+std::string BufferCollection::GetBufferName(Handle handle) const
+{
+    auto infoIt = m_bufferInfo.find(handle);
+
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.name : std::string());
+}
+
 void BufferCollection::SetBufferName(Handle handle, std::string const& name)
 {
-    m_bufferNames[handle] = name;
+    m_bufferInfo[handle].name = name;
 
     LOG_AUDIO->Debug("Buffer #{}: name = {}", handle, name.c_str());
 }
 
-std::string BufferCollection::GetBufferName(Handle handle) const
+uint8_t BufferCollection::GetBufferChannelCount(Handle handle) const
 {
-    auto nameIt = m_bufferNames.find(handle);
+    auto infoIt = m_bufferInfo.find(handle);
 
-    return ((m_bufferNames.cend() != nameIt) ? nameIt->second : std::string());
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.channels : 0);
+}
+
+uint32_t BufferCollection::GetBufferFrequencyHz(Handle handle) const
+{
+    auto infoIt = m_bufferInfo.find(handle);
+
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.frequencyHz : 0);
+}
+
+uint32_t BufferCollection::GetBufferSampleCount(Handle handle) const
+{
+    auto infoIt = m_bufferInfo.find(handle);
+
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.sampleCount : 0);
+}
+
+std::chrono::seconds BufferCollection::GetBufferDuration(Handle handle) const
+{
+    auto infoIt = m_bufferInfo.find(handle);
+
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.duration : std::chrono::seconds(0));
 }
 
 bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& content)
@@ -133,7 +161,7 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
     if (VORBIS__no_error == error)
     {
         stb_vorbis_info vorbisInfo = stb_vorbis_get_info(pVorbis);
-        int const sampleCount = stb_vorbis_stream_length_in_samples(pVorbis) * vorbisInfo.channels;
+        uint32_t const sampleCount = stb_vorbis_stream_length_in_samples(pVorbis) * vorbisInfo.channels;
 
         ALshort* pSampleBuffer = new ALshort[sampleCount];
 
@@ -163,7 +191,16 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
 
         alErr = alGetError();
 
-        if (AL_NO_ERROR != alErr)
+        if (AL_NO_ERROR == alErr)
+        {
+            BufferInfo& info = m_bufferInfo[handle];
+
+            info.channels = vorbisInfo.channels;
+            info.frequencyHz = vorbisInfo.sample_rate;
+            info.sampleCount = sampleCount;
+            info.duration = std::chrono::seconds(info.sampleCount / info.frequencyHz);
+        }
+        else
         {
             LOG_AUDIO->Warning("Buffer #{}: binding data to OpenAL: {:#x}", handle, alErr);
         }
@@ -187,7 +224,7 @@ bool BufferCollection::ResetBuffer(Handle handle)
 
     Reclaim(handle);
 
-    m_bufferNames.erase(handle);
+    m_bufferInfo.erase(handle);
 
     return true;
 }

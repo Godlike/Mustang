@@ -9,6 +9,8 @@ project(BasicTulparDemo)
 
 set(CMAKE_CXX_STANDARD 14)
 
+find_package(Threads)
+
 set(AdditionalCatchParameters
     WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
 )
@@ -27,7 +29,10 @@ add_definitions(
 )
 
 add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} ${TULPAR_AUDIO_LIB})
+target_link_libraries(${PROJECT_NAME}
+    ${TULPAR_AUDIO_LIB}
+    ${CMAKE_THREAD_LIBS_INIT}
+)
 
 set_target_properties(
     ${PROJECT_NAME}
