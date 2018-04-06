@@ -142,11 +142,11 @@ uint32_t BufferCollection::GetBufferSampleCount(Handle handle) const
     return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.sampleCount : 0);
 }
 
-std::chrono::seconds BufferCollection::GetBufferDuration(Handle handle) const
+std::chrono::nanoseconds BufferCollection::GetBufferDuration(Handle handle) const
 {
     auto infoIt = m_bufferInfo.find(handle);
 
-    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.duration : std::chrono::seconds(0));
+    return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.duration : std::chrono::nanoseconds(0));
 }
 
 bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& content)
@@ -195,10 +195,12 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
         {
             BufferInfo& info = m_bufferInfo[handle];
 
+            double const timeNs = 1e-9 * (static_cast<double>(info.sampleCount) / static_cast<double>(info.frequencyHz));
+
             info.channels = vorbisInfo.channels;
             info.frequencyHz = vorbisInfo.sample_rate;
             info.sampleCount = sampleCount;
-            info.duration = std::chrono::seconds(info.sampleCount / info.frequencyHz);
+            info.duration = std::chrono::nanoseconds(static_cast<uint64_t>(std::round(timeNs)));
         }
         else
         {

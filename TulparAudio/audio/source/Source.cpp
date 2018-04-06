@@ -117,6 +117,13 @@ bool Source::Pause()
     return m_parent.lock()->PauseSource(m_handle);
 }
 
+std::chrono::nanoseconds Source::GetPlaybackDuration() const
+{
+    assert(IsValid());
+
+    return m_parent.lock()->GetSourcePlaybackDuration(m_handle);
+}
+
 std::chrono::nanoseconds Source::GetPlaybackPosition() const
 {
     assert(IsValid());

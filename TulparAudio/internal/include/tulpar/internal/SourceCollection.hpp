@@ -47,6 +47,7 @@ public:
     virtual ~SourceCollection();
 
     audio::Buffer GetSourceActiveBuffer(SourceHandle source) const;
+    std::vector<audio::Buffer> GetSourceActiveBuffers(SourceHandle source) const;
 
     audio::Buffer GetSourceStaticBuffer(SourceHandle source) const;
     bool SetSourceStaticBuffer(SourceHandle source, BufferHandle buffer);
@@ -61,6 +62,8 @@ public:
     bool StopSource(SourceHandle source);
     bool RewindSource(SourceHandle source);
     bool PauseSource(SourceHandle source);
+
+    std::chrono::nanoseconds GetSourcePlaybackDuration(SourceHandle source) const;
 
     std::chrono::nanoseconds GetSourcePlaybackPosition(SourceHandle source) const;
     bool SetSourcePlaybackPosition(SourceHandle source, std::chrono::nanoseconds offset);
@@ -91,10 +94,18 @@ protected:
     virtual audio::Source* CreateObject(SourceHandle source) override final;
 
 private:
+    struct Meta
+    {
+        uint32_t activeSampleCount                      = 0;
+        std::chrono::nanoseconds activeTotalDuration    = std::chrono::nanoseconds{0};
+    };
+
     BufferCollection const& m_buffers;
 
     std::unordered_map<SourceHandle, BufferHandle> m_sourceBuffers;
     std::unordered_map<SourceHandle, std::vector<BufferHandle>> m_sourceQueuedBuffers;
+
+    Meta m_meta;
 };
 
 }

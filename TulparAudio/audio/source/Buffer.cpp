@@ -64,7 +64,7 @@ uint32_t Buffer::GetSampleCount() const
     return m_parent.lock()->GetBufferSampleCount(m_handle);
 }
 
-std::chrono::seconds Buffer::GetDuration() const
+std::chrono::nanoseconds Buffer::GetDuration() const
 {
     assert(IsValid());
 

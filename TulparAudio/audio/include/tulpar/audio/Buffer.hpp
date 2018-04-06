@@ -51,7 +51,7 @@ public:
     uint8_t GetChannelCount() const;
     uint32_t GetFrequencyHz() const;
     uint32_t GetSampleCount() const;
-    std::chrono::seconds GetDuration() const;
+    std::chrono::nanoseconds GetDuration() const;
 
     bool Reset();
 

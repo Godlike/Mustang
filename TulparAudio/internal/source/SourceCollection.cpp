@@ -117,6 +117,7 @@ SourceCollection::SourceCollection(BufferCollection const& buffers
 )
     : Collection<audio::Source>(generator, reclaimer, deleter)
     , m_buffers(buffers)
+    , m_meta()
 {
 
 }
@@ -154,6 +155,33 @@ audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
     return buffer;
 }
 
+std::vector<audio::Buffer> SourceCollection::GetSourceActiveBuffers(SourceHandle source) const
+{
+    std::vector<audio::Buffer> queue;
+
+    switch (GetSourceType(source))
+    {
+        case audio::Source::Type::Static:
+        {
+            queue.push_back(GetSourceStaticBuffer(source));
+
+            break;
+        }
+        case audio::Source::Type::Streaming:
+        {
+            queue = GetSourceQueuedBuffers(source);
+
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+
+    return queue;
+}
+
 audio::Buffer SourceCollection::GetSourceStaticBuffer(SourceHandle source) const
 {
     assert(m_sourceBuffers.cend() != m_sourceBuffers.find(source));
@@ -179,6 +207,21 @@ bool SourceCollection::SetSourceStaticBuffer(SourceHandle source, BufferHandle b
 
     if (AL_NO_ERROR == alErr)
     {
+        using namespace std::chrono_literals;
+
+        if (0 != buffer)
+        {
+            audio::Buffer buf = m_buffers.Get(buffer);
+
+            m_meta.activeSampleCount = buf.GetSampleCount();
+            m_meta.activeTotalDuration = buf.GetDuration();
+        }
+        else
+        {
+            m_meta.activeSampleCount = 0;
+            m_meta.activeTotalDuration = 0ns;
+        }
+
         m_sourceQueuedBuffers[source].clear();
     }
     else
@@ -271,16 +314,23 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
 
     if (AL_NO_ERROR == alErr)
     {
+        using namespace std::chrono_literals;
+
         std::vector<BufferHandle>& queue = m_sourceQueuedBuffers[source];
+        queue.reserve(buffers.size());
 
-        queue.resize(buffers.size());
+        m_meta.activeSampleCount = 0;
+        m_meta.activeTotalDuration = 0ns;
 
-        std::transform(buffers.begin(), buffers.end(), queue.begin(),
-            [](audio::Buffer const& buffer) -> BufferHandle
-            {
-                return buffer.GetHandle();
-            }
-        );
+        for (audio::Buffer const& buffer : buffers)
+        {
+            m_meta.activeSampleCount += buffer.GetSampleCount();
+            m_meta.activeTotalDuration += buffer.GetDuration();
+
+            queue.push_back(buffer.GetHandle());
+        }
+
+        m_sourceBuffers[source] = audio::Buffer();
     }
     else
     {
@@ -378,6 +428,11 @@ bool SourceCollection::PauseSource(SourceHandle source)
     return AL_NO_ERROR == alErr;
 }
 
+std::chrono::nanoseconds SourceCollection::GetSourcePlaybackDuration(SourceHandle source) const
+{
+    return m_meta.activeTotalDuration;
+}
+
 std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandle source) const
 {
     std::chrono::nanoseconds result(0);
@@ -399,16 +454,32 @@ std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandl
                 || (audio::Source::State::Paused == state))
         )
         {
-            // @todo: fix calculation for queued buffers of different frequencies
+            std::vector<audio::Buffer> buffers = GetSourceActiveBuffers(source);
+            double timeNs = 0.0;
+            uint32_t i = 0;
 
-            audio::Buffer buffer = GetSourceActiveBuffer(source);
+            while (sampleOffset > 0)
+            {
+                // get buffer
+                audio::Buffer const& buffer = buffers.at(i);
 
-            // time in seconds
-            double time = static_cast<double>(sampleOffset) / static_cast<double>(buffer.GetFrequencyHz());
-            // convert to nanoseconds
-            time *= 1e9;
+                // check how many samples from this buffer we can consume
+                uint32_t const consumedSamples = std::min(
+                    static_cast<uint32_t>(sampleOffset)
+                    , buffer.GetSampleCount()
+                );
 
-            result = std::chrono::nanoseconds(static_cast<uint64_t>(std::round(time)));
+                // calculate time based on this buffer properties
+                timeNs += (static_cast<double>(consumedSamples)
+                        / static_cast<double>(buffer.GetFrequencyHz()))
+                    * 1e9;
+
+                // remove consumed samples
+                sampleOffset -= consumedSamples;
+                ++i;
+            }
+
+            result = std::chrono::nanoseconds(static_cast<uint64_t>(std::round(timeNs)));
         }
     }
     else
@@ -423,16 +494,38 @@ bool SourceCollection::SetSourcePlaybackPosition(SourceHandle source, std::chron
 {
     LOG_AUDIO->Debug("Source #{}: set playback position {}ns", source, offset.count());
 
-    // @todo: fix calculation for queued buffers of different frequencies
-
     audio::Buffer buffer = GetSourceActiveBuffer(source);
 
-    // time in nanoseconds
-    double time = offset.count();
-    // convert to seconds
-    time *= 1e-9;
+    ALint sampleOffset = 0;
 
-    ALint sampleOffset = buffer.GetFrequencyHz() * time;
+    {
+        std::vector<audio::Buffer> buffers = GetSourceActiveBuffers(source);
+        uint64_t offsetNs = offset.count();
+        uint32_t i = 0;
+
+        while (offsetNs > 0)
+        {
+            // get buffer
+            audio::Buffer const& buffer = buffers.at(i);
+
+            // check how much time from this buffer we can consume
+            uint64_t const consumedTime = std::min(
+                offsetNs
+                , static_cast<uint64_t>(buffer.GetDuration().count())
+            );
+
+            // calculate time based on this buffer properties
+            uint32_t const sampleCount = buffer.GetFrequencyHz()
+                * (static_cast<double>(consumedTime) * 1e-9);
+
+            sampleOffset += std::min(sampleCount, buffer.GetSampleCount());
+
+            // removed consumed time
+            offsetNs -= consumedTime;
+            ++i;
+        }
+    }
+
 
     // clear error state
     ALenum alErr = alGetError();
@@ -470,11 +563,7 @@ float SourceCollection::GetSourcePlaybackProgress(SourceHandle source) const
                 || (audio::Source::State::Paused == state))
         )
         {
-            // @todo: fix calculation for queued buffers of different frequencies
-
-            audio::Buffer buffer = GetSourceActiveBuffer(source);
-
-            result = static_cast<float>(sampleOffset) / static_cast<float>(buffer.GetSampleCount());
+            result = static_cast<float>(sampleOffset) / static_cast<float>(m_meta.activeSampleCount);
         }
     }
     else
@@ -489,11 +578,9 @@ bool SourceCollection::SetSourcePlaybackProgress(SourceHandle source, float valu
 {
     LOG_AUDIO->Debug("Source #{}: set playback progress {}%", source, value);
 
-    // @todo: fix calculation for queued buffers of different frequencies
-
     audio::Buffer buffer = GetSourceActiveBuffer(source);
 
-    ALint sampleOffset = std::round(static_cast<float>(buffer.GetSampleCount()) * value);
+    ALint sampleOffset = static_cast<ALint>(std::round(static_cast<float>(m_meta.activeSampleCount) * value));
 
     // clear error state
     ALenum alErr = alGetError();

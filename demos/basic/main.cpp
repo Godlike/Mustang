@@ -105,6 +105,8 @@ int main()
 
             {
                 source.ResetBuffer();
+                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
+
                 source.QueueBuffers({{ buffer, buffer, buffer }});
 
                 float pitch = 1.0f;
@@ -113,7 +115,7 @@ int main()
                 float delta = 0.05f;
                 float factor = -1;
 
-                float x = -0.3f;
+                float x = -0.4f;
 
                 source.Play();
 
@@ -134,13 +136,49 @@ int main()
                     }
 
                     source.SetPitch(std::max(pitch, 0.0f));
-                    source.SetPosition({{ x, 0.0f, 0.0f }});
+                    source.SetPosition({{ x, 0.0f, 1.0f }});
 
                     std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
                     std::cout << "Progress: " << source.GetPlaybackProgress();
                     std::cout << std::endl;
 
                     std::this_thread::sleep_for(20ms);
+                }
+            }
+
+            {
+                source.ResetBuffer();
+                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
+
+                source.SetStaticBuffer(buffer);
+                source.SetPlaybackPosition(50ms);
+                success = source.Play();
+
+                while (tulpar::audio::Source::State::Stopped != source.GetState())
+                {
+                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
+                    std::cout << "Progress: " << source.GetPlaybackProgress();
+                    std::cout << std::endl;
+
+                    std::this_thread::sleep_for(100ms);
+                }
+            }
+
+            {
+                source.ResetBuffer();
+                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
+
+                source.SetStaticBuffer(buffer);
+                source.SetPlaybackProgress(0.2f);
+                success = source.Play();
+
+                while (tulpar::audio::Source::State::Stopped != source.GetState())
+                {
+                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
+                    std::cout << "Progress: " << source.GetPlaybackProgress();
+                    std::cout << std::endl;
+
+                    std::this_thread::sleep_for(100ms);
                 }
             }
         }

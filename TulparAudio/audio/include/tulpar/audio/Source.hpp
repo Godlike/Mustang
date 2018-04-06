@@ -82,6 +82,8 @@ public:
     bool Rewind();
     bool Pause();
 
+    std::chrono::nanoseconds GetPlaybackDuration() const;
+
     std::chrono::nanoseconds GetPlaybackPosition() const;
     bool SetPlaybackPosition(std::chrono::nanoseconds offset);
 

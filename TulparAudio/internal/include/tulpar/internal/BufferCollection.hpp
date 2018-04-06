@@ -19,8 +19,6 @@
 #include <string>
 #include <unordered_map>
 
-using namespace std::chrono_literals;
-
 namespace tulpar
 {
 namespace internal
@@ -54,7 +52,7 @@ public:
     uint8_t GetBufferChannelCount(Handle handle) const;
     uint32_t GetBufferFrequencyHz(Handle handle) const;
     uint32_t GetBufferSampleCount(Handle handle) const;
-    std::chrono::seconds GetBufferDuration(Handle handle) const;
+    std::chrono::nanoseconds GetBufferDuration(Handle handle) const;
 
     bool SetBufferData(Handle handle, mule::asset::Content const& content);
 
@@ -69,11 +67,11 @@ protected:
 private:
     struct BufferInfo
     {
-        std::string name                = std::string();
-        uint8_t channels                = 0;
-        uint32_t frequencyHz            = 0;
-        uint32_t sampleCount            = 0;
-        std::chrono::seconds duration   = 0s;
+        std::string name                    = std::string();
+        uint8_t channels                    = 0;
+        uint32_t frequencyHz                = 0;
+        uint32_t sampleCount                = 0;
+        std::chrono::nanoseconds duration   = std::chrono::nanoseconds{0};
     };
 
     std::unordered_map<Handle, BufferInfo> m_bufferInfo;
