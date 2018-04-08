@@ -10,6 +10,13 @@
 
 #include <tulpar/internal/BufferCollection.hpp>
 
+#include <tulpar/Loggers.hpp>
+
+#include <mule/MuleUtilities.hpp>
+#include <mule/Loggers.hpp>
+
+#include <spdlog/sinks/ansicolor_sink.h>
+
 #include <catch.hpp>
 
 #include <cstdint>
@@ -21,7 +28,33 @@ static std::shared_ptr<tulpar::internal::BufferCollection> s_bufferCollection(nu
 
 void Setup()
 {
+    auto ansiSink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
+    ansiSink->set_level(mule::LogLevel::trace);
+
+    mule::Loggers::Instance().SetDefaultSettings(
+        mule::Loggers::Settings{
+            std::string()
+            , std::string("%+")
+            , mule::LogLevel::info
+            , { ansiSink }
+        }
+    );
+
+    mule::MuleUtilities::Initialize();
+
+    tulpar::Loggers::Instance().SetDefaultSettings(
+        mule::Loggers::Settings{
+            std::string()
+            , std::string("%+")
+            , mule::LogLevel::trace
+            , { ansiSink }
+        }
+    );
+
+    tulpar::Loggers::Instance().Reinitialize();
+
     tulpar::tests::internal::s_incrementIndex = 0;
+
     s_bufferCollection.reset(new tulpar::internal::BufferCollection(
         tulpar::tests::internal::IncrementGenerator<tulpar::audio::Buffer>
         , tulpar::tests::internal::DummyReclaimer<tulpar::audio::Buffer>
