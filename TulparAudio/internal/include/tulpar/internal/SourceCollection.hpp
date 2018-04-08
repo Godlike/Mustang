@@ -8,9 +8,14 @@
 #define TULPAR_INTERNAL_SOURCE_COLLECTION_HPP
 
 #include <tulpar/internal/Collection.hpp>
+#include <tulpar/internal/Context.hpp>
+
+#include <tulpar/internal/BufferCollection.hpp>
 
 #include <tulpar/audio/Buffer.hpp>
 #include <tulpar/audio/Source.hpp>
+
+#include <tulpar/TulparAudio.hpp>
 
 #include <array>
 #include <memory>
@@ -29,8 +34,6 @@ struct OpenAVSourceHandler
     static void Delete(Collection<audio::Source>::Handles const& handle);
 };
 
-class BufferCollection;
-
 class SourceCollection
     : public Collection<audio::Source>
     , public std::enable_shared_from_this<SourceCollection>
@@ -38,13 +41,21 @@ class SourceCollection
 public:
     using SourceHandle = audio::Source::Handle;
     using BufferHandle = audio::Buffer::Handle;
+    using MigrationMapping = TulparAudio::SourceMigrationMapping;
 
     SourceCollection(BufferCollection const& buffers
         , Collection<audio::Source>::HandleGenerator generator = OpenAVSourceHandler::Generate
         , Collection<audio::Source>::HandleReclaimer reclaimer = OpenAVSourceHandler::Reclaim
         , Collection<audio::Source>::HandleDeleter deleter = OpenAVSourceHandler::Delete
     );
+
     virtual ~SourceCollection();
+
+    MigrationMapping InheritCollection(SourceCollection const& other
+        , BufferCollection::MigrationMapping const& bufferMapping
+        , Context& oldContext
+        , Context& newContext
+    );
 
     audio::Buffer GetSourceActiveBuffer(SourceHandle source) const;
     std::vector<audio::Buffer> GetSourceActiveBuffers(SourceHandle source) const;

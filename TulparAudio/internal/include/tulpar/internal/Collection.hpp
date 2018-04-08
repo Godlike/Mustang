@@ -45,6 +45,7 @@ public:
 
 protected:
     void Reclaim(Handle handle);
+    std::vector<Handle> PrepareBatch(uint32_t size);
 
     virtual T* GenerateObject(Handle handle) const = 0;
     virtual T* CreateObject(Handle handle) = 0;

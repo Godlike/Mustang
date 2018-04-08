@@ -46,7 +46,9 @@ public:
     bool IsValid() const;
 
     bool BindData(mule::asset::Handler asset);
+
     std::string GetDataName() const;
+    void SetDataName(std::string const& value);
 
     uint8_t GetChannelCount() const;
     uint32_t GetFrequencyHz() const;

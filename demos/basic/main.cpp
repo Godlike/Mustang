@@ -65,6 +65,7 @@ std::array<float, 3> GetSpiralCoords(float radius, float progress)
 
 void print(tulpar::audio::Source const& source)
 {
+    std::cout << "State: " << source.GetState() << "\t";
     std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
     std::cout << "Progress: " << source.GetPlaybackProgress();
     std::cout << std::endl;
@@ -265,6 +266,114 @@ void RotatingListener(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
     source.Reset();
 }
 
+void SwitchingDevice(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    auto devices = tulpar::TulparConfigurator::GetDevices();
+
+    if (devices.size() > 1)
+    {
+        // static buffer
+        {
+            tulpar::TulparConfigurator secondDeviceConfig;
+            secondDeviceConfig.device = devices[1];
+
+            bool hasSwitched = false;
+
+            tulpar::audio::Source source = audio.SpawnSource();
+            source.SetLooping(false);
+
+            source.SetStaticBuffer(buffer);
+            source.Play();
+
+            std::chrono::milliseconds sleepTime = 8ms;
+
+            while (tulpar::audio::Source::State::Stopped != source.GetState())
+            {
+                print(source);
+
+                if (!hasSwitched && source.GetPlaybackPosition() > 70ms)
+                {
+                    hasSwitched = true;
+                    sleepTime = 100ms;
+
+                    tulpar::TulparAudio::DeviceChangeMapping mapping;
+
+                    std::cout << "device switch started - " << secondDeviceConfig.device.name.c_str() << std::endl;
+
+                    if (audio.Reinitialize(secondDeviceConfig, &mapping))
+                    {
+                        std::cout << "device switch completed" << std::endl;
+
+                        source = audio.GetSource(mapping.sourceMapping[source.GetHandle()]);
+                        buffer = audio.GetBuffer(mapping.bufferMapping[buffer.GetHandle()]);
+                    }
+                    else
+                    {
+                        std::cout << "device switch failed" << std::endl;
+                    }
+                }
+
+                std::this_thread::sleep_for(sleepTime);
+            }
+
+            source.Reset();
+        }
+
+        // buffer queue
+        {
+            tulpar::TulparConfigurator firstDeviceConfig;
+            firstDeviceConfig.device = devices[0];
+
+            bool hasSwitched = false;
+
+            tulpar::audio::Source source = audio.SpawnSource();
+            source.SetLooping(false);
+
+            source.QueueBuffers({{ buffer, buffer }} );
+            source.Play();
+
+            std::chrono::milliseconds sleepTime = 8ms;
+
+            while (tulpar::audio::Source::State::Stopped != source.GetState())
+            {
+                print(source);
+
+                if (!hasSwitched && source.GetPlaybackPosition() > 150ms)
+                {
+                    hasSwitched = true;
+                    sleepTime = 100ms;
+
+                    tulpar::TulparAudio::DeviceChangeMapping mapping;
+
+                    std::cout << "device switch started - " << firstDeviceConfig.device.name.c_str() << std::endl;
+
+                    if (audio.Reinitialize(firstDeviceConfig, &mapping))
+                    {
+                        std::cout << "device switch completed" << std::endl;
+
+                        source = audio.GetSource(mapping.sourceMapping[source.GetHandle()]);
+                        buffer = audio.GetBuffer(mapping.bufferMapping[buffer.GetHandle()]);
+                    }
+                    else
+                    {
+                        std::cout << "device switch failed" << std::endl;
+                    }
+                }
+
+                std::this_thread::sleep_for(sleepTime);
+            }
+
+            source.Reset();
+        }
+    }
+    else
+    {
+        std::cerr << "SwitchingDevice() shall be run only if system has more than 1 audio device" << std::endl;
+    }
+}
+
 int main()
 {
     auto ansiSink = std::make_shared<spdlog::sinks::ansicolor_stdout_sink_mt>();
@@ -323,6 +432,7 @@ int main()
             SeekPlayback(audio, buffer);
             MovingListener(audio, buffer);
             RotatingListener(audio, buffer);
+            SwitchingDevice(audio, buffer);
         }
 
         audio.Deinitialize();

@@ -29,11 +29,7 @@ bool Buffer::BindData(mule::asset::Handler asset)
 {
     assert(IsValid());
 
-    auto parent = m_parent.lock();
-
-    parent->SetBufferName(m_handle, asset.GetName());
-
-    return parent->SetBufferData(m_handle, asset.GetContent());
+    return m_parent.lock()->SetBufferData(m_handle, asset);
 }
 
 std::string Buffer::GetDataName() const
@@ -41,6 +37,13 @@ std::string Buffer::GetDataName() const
     assert(IsValid());
 
     return m_parent.lock()->GetBufferName(m_handle);
+}
+
+void Buffer::SetDataName(std::string const& value)
+{
+    assert(IsValid());
+
+    m_parent.lock()->SetBufferName(m_handle, value);
 }
 
 uint8_t Buffer::GetChannelCount() const

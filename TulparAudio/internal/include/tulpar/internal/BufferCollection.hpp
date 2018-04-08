@@ -11,7 +11,9 @@
 
 #include <tulpar/audio/Buffer.hpp>
 
-#include <mule/asset/Content.hpp>
+#include <tulpar/TulparAudio.hpp>
+
+#include <mule/asset/Handler.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -37,6 +39,7 @@ class BufferCollection
 {
 public:
     using Handle = audio::Buffer::Handle;
+    using MigrationMapping = TulparAudio::BufferMigrationMapping;
 
     BufferCollection(
         Collection<audio::Buffer>::HandleGenerator generator = OpenAVBufferHandler::Generate
@@ -46,6 +49,8 @@ public:
 
     virtual ~BufferCollection();
 
+    MigrationMapping InheritCollection(BufferCollection const& other);
+
     std::string GetBufferName(Handle handle) const;
     void SetBufferName(Handle handle, std::string const& name);
 
@@ -54,7 +59,7 @@ public:
     uint32_t GetBufferSampleCount(Handle handle) const;
     std::chrono::nanoseconds GetBufferDuration(Handle handle) const;
 
-    bool SetBufferData(Handle handle, mule::asset::Content const& content);
+    bool SetBufferData(Handle handle, mule::asset::Handler asset);
 
     bool ResetBuffer(Handle handle);
 
@@ -67,6 +72,7 @@ protected:
 private:
     struct BufferInfo
     {
+        mule::asset::Handler asset          = mule::asset::Handler();
         std::string name                    = std::string();
         uint8_t channels                    = 0;
         uint32_t frequencyHz                = 0;

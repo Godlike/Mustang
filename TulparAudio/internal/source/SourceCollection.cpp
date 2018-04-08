@@ -6,8 +6,6 @@
 
 #include <tulpar/internal/SourceCollection.hpp>
 
-#include <tulpar/internal/BufferCollection.hpp>
-
 #include <tulpar/InternalLoggers.hpp>
 
 #include <AL/al.h>
@@ -124,6 +122,189 @@ SourceCollection::SourceCollection(BufferCollection const& buffers
 SourceCollection::~SourceCollection()
 {
 
+}
+
+namespace
+{
+
+struct MigrationInfo
+{
+    SourceCollection::BufferHandle staticBuffer;
+    std::vector<SourceCollection::BufferHandle> queuedBuffers;
+
+    audio::Source::State state;
+    audio::Source::Type type;
+
+    ALint sampleOffset;
+
+    std::array<float, 3> position;
+
+    float pitch;
+    float gain;
+
+    bool isRelative;
+    bool isLooping;
+};
+
+}
+
+SourceCollection::MigrationMapping SourceCollection::InheritCollection(SourceCollection const& other
+    , BufferCollection::MigrationMapping const& bufferMapping
+    , Context& oldContext
+    , Context& newContext
+)
+{
+    assert(this != &other);
+
+    MigrationMapping result;
+
+    std::vector<SourceHandle> const& old = other.m_used;
+
+    if (!old.empty())
+    {
+        // gather old data from the old context
+        oldContext.MakeCurrent();
+
+        std::unordered_map<SourceHandle, MigrationInfo> info;
+        ALuint* tmpSources = new ALuint[old.size()];
+
+        // get old states
+        {
+            uint32_t i = 0;
+
+            for (SourceHandle const& handle : old)
+            {
+                MigrationInfo& migrate = info[handle];
+
+                migrate.state = other.GetSourceState(handle);
+                tmpSources[i++] = static_cast<ALuint>(handle);
+            }
+
+            // pause all old sources
+            alSourcePausev(i, tmpSources);
+        }
+
+        // get other information
+        {
+            for (SourceHandle const& handle : old)
+            {
+                MigrationInfo& migrate = info[handle];
+
+                migrate.type = other.GetSourceType(handle);
+
+                switch (migrate.type)
+                {
+                    case audio::Source::Type::Static:
+                    {
+                        migrate.staticBuffer = other.m_sourceBuffers.at(handle);
+                        break;
+                    }
+                    case audio::Source::Type::Streaming:
+                    {
+                        migrate.queuedBuffers = other.m_sourceQueuedBuffers.at(handle);
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                alGetSourcei(static_cast<ALuint>(handle), AL_SAMPLE_OFFSET, &migrate.sampleOffset);
+
+                migrate.position = other.GetSourcePosition(handle);
+
+                migrate.pitch = other.GetSourcePitch(handle);
+                migrate.gain = other.GetSourceGain(handle);
+
+                migrate.isRelative = other.IsSourceRelative(handle);
+                migrate.isLooping = other.IsSourceLooping(handle);
+            }
+        }
+
+        // restore old data in the new context
+        newContext.MakeCurrent();
+
+        {
+            std::vector<SourceHandle> batch = PrepareBatch(old.size());
+            uint32_t i = 0;
+            uint32_t playingSources = 0;
+
+            for (SourceHandle const& oldHandle : old)
+            {
+                MigrationInfo const& migrate = info.at(oldHandle);
+
+                SourceHandle newHandle = batch[i++];
+                result[oldHandle] = newHandle;
+
+                switch (migrate.state)
+                {
+                    case audio::Source::State::Playing:
+                    {
+                        tmpSources[playingSources++] = static_cast<ALuint>(newHandle);
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                switch (migrate.type)
+                {
+                    case audio::Source::Type::Static:
+                    {
+                        assert(bufferMapping.cend() != bufferMapping.find(migrate.staticBuffer));
+
+                        SetSourceStaticBuffer(newHandle, bufferMapping.at(migrate.staticBuffer));
+                        break;
+                    }
+                    case audio::Source::Type::Streaming:
+                    {
+                        std::vector<audio::Buffer> buffers;
+                        buffers.reserve(migrate.queuedBuffers.size());
+
+                        std::transform(migrate.queuedBuffers.cbegin()
+                            , migrate.queuedBuffers.cend()
+                            , std::back_inserter(buffers)
+                            , [&](BufferHandle const& oldBuffer) -> audio::Buffer
+                            {
+                                assert(bufferMapping.cend() != bufferMapping.find(oldBuffer));
+
+                                return m_buffers.Get(bufferMapping.at(oldBuffer));
+                            }
+                        );
+
+                        QueueSourceBuffers(newHandle, buffers);
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+
+                alSourcei(static_cast<ALuint>(newHandle), AL_SAMPLE_OFFSET, migrate.sampleOffset);
+
+                SetSourcePosition(newHandle, migrate.position);
+
+                SetSourcePitch(newHandle, migrate.pitch);
+                SetSourceGain(newHandle, migrate.gain);
+
+                SetSourceRelative(newHandle, migrate.isRelative);
+                SetSourceLooping(newHandle, migrate.isLooping);
+            }
+
+            if (playingSources)
+            {
+                alSourcePlayv(playingSources, tmpSources);
+            }
+        }
+
+        delete[] tmpSources;
+    }
+
+    return result;
 }
 
 audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const

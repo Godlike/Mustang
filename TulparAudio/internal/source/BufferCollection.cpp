@@ -107,6 +107,33 @@ BufferCollection::~BufferCollection()
 
 }
 
+BufferCollection::MigrationMapping BufferCollection::InheritCollection(BufferCollection const& other)
+{
+    assert(this != &other);
+
+    MigrationMapping mapping;
+
+    std::vector<Handle> const& old = other.m_used;
+
+    if (!old.empty())
+    {
+        std::vector<Handle> batch = PrepareBatch(old.size());
+        uint32_t i = 0;
+
+        for (Handle const& oldHandle : old)
+        {
+            Handle newHandle = batch[i++];
+
+            mapping[oldHandle] = newHandle;
+
+            SetBufferData(newHandle, other.m_bufferInfo.at(oldHandle).asset);
+            SetBufferName(newHandle, other.m_bufferInfo.at(oldHandle).name);
+        }
+    }
+
+    return mapping;
+}
+
 std::string BufferCollection::GetBufferName(Handle handle) const
 {
     auto infoIt = m_bufferInfo.find(handle);
@@ -149,13 +176,14 @@ std::chrono::nanoseconds BufferCollection::GetBufferDuration(Handle handle) cons
     return ((m_bufferInfo.cend() != infoIt) ? infoIt->second.duration : std::chrono::nanoseconds(0));
 }
 
-bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& content)
+bool BufferCollection::SetBufferData(Handle handle, mule::asset::Handler asset)
 {
     ALuint index = static_cast<ALuint>(handle);
 
-    LOG_AUDIO->Trace("Buffer #{}: parsing data with STB...", handle);
+    LOG_AUDIO->Trace("Buffer #{}: parsing '{}' data with STB...", handle, asset.GetName().c_str());
 
     int error = 0;
+    mule::asset::Content const& content = asset.GetContent();
     stb_vorbis* pVorbis = stb_vorbis_open_memory(content.GetBuffer().data(), content.GetSize(), &error, NULL);
 
     if (VORBIS__no_error == error)
@@ -197,6 +225,8 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Content const& 
 
             double const timeNs = 1e-9 * (static_cast<double>(info.sampleCount) / static_cast<double>(info.frequencyHz));
 
+            info.asset = asset;
+            info.name = asset.GetName();
             info.channels = vorbisInfo.channels;
             info.frequencyHz = vorbisInfo.sample_rate;
             info.sampleCount = sampleCount;

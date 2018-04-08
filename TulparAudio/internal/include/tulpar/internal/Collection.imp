@@ -37,9 +37,14 @@ template<typename T>
 template<typename T>
     void Collection<T>::Initialize(uint32_t batchSize)
 {
+    assert(batchSize != 0);
+
     m_batchSize = batchSize;
 
-    PushHandles(m_generator(batchSize));
+    if (m_available.size() < batchSize)
+    {
+        PushHandles(m_generator(batchSize));
+    }
 }
 
 template<typename T>
@@ -88,6 +93,37 @@ template<typename T>
 
     delete m_sources[handle];
     m_sources.erase(handle);
+}
+
+template<typename T>
+    std::vector<typename Collection<T>::Handle> Collection<T>::PrepareBatch(uint32_t size)
+{
+    if (m_available.size() < size)
+    {
+        uint32_t const count = size - m_available.size();
+        uint32_t const batchCount = (count + m_batchSize) / m_batchSize;
+
+        PushHandles(m_generator(batchCount * m_batchSize));
+    }
+
+    std::vector<typename Collection<T>::Handle> result;
+    result.reserve(size);
+
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        Handle handle = m_available.front();
+
+        m_available.pop();
+        m_used.push_back(handle);
+
+        T* pObject = CreateObject(handle);
+
+        m_sources[handle] = pObject;
+
+        result.push_back(handle);
+    }
+
+    return result;
 }
 
 template<typename T>
