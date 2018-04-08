@@ -12,6 +12,7 @@
 #include <tulpar/TulparConfigurator.hpp>
 
 #include <tulpar/audio/Buffer.hpp>
+#include <tulpar/audio/Listener.hpp>
 #include <tulpar/audio/Source.hpp>
 
 #include <tulpar/Loggers.hpp>
@@ -26,10 +27,243 @@
 #include <spdlog/sinks/ansicolor_sink.h>
 
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <thread>
 
 static std::string const testFile(TULPAR_DEMO_WORKING_DIR"data/ding_02.ogg");
+
+constexpr double pi()
+{
+    return std::atan(1) * 4;
+}
+
+constexpr double tau()
+{
+    return pi() * 2;
+}
+
+std::array<float, 3> GetCircleCoords(float radius, float progress)
+{
+    float const radians = progress * tau();
+
+    return {{
+        radius * std::sin(radians)      // x
+        , 0.0f                          // y
+        , -radius * std::cos(radians)   // z
+    }};
+}
+
+std::array<float, 3> GetSpiralCoords(float radius, float progress)
+{
+    std::array<float, 3> coords = GetCircleCoords(radius, progress);
+
+    coords[1] = radius * (progress - 0.5f) * 2.0f;  // y
+
+    return coords;
+}
+
+void print(tulpar::audio::Source const& source)
+{
+    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
+    std::cout << "Progress: " << source.GetPlaybackProgress();
+    std::cout << std::endl;
+}
+
+void SimplePlayback(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetLooping(false);
+    source.SetStaticBuffer(buffer);
+
+    source.Play();
+
+    while (tulpar::audio::Source::State::Stopped != source.GetState())
+    {
+        print(source);
+
+        std::this_thread::sleep_for(100ms);
+    }
+
+    source.Reset();
+}
+
+void MovingSource(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetLooping(false);
+    source.QueueBuffers({{ buffer, buffer, buffer }});
+
+    float pitch = 1.0f;
+    source.SetPitch(pitch);
+
+    float delta = 0.05f;
+    float factor = -1;
+
+    source.Play();
+
+    float const radius = 1.5f;
+
+    while (tulpar::audio::Source::State::Stopped != source.GetState())
+    {
+        pitch += factor * delta;
+
+        if (pitch <= 0.0f)
+        {
+            pitch = 0.0f;
+            factor = -factor;
+        }
+        else if (pitch >= 1.0f)
+        {
+            pitch = 1.0f;
+            factor = -factor;
+        }
+
+        source.SetPitch(std::max(pitch, 0.0f));
+        source.SetPosition(GetSpiralCoords(radius, source.GetPlaybackProgress()));
+
+        print(source);
+
+        std::this_thread::sleep_for(20ms);
+    }
+
+    source.Reset();
+}
+
+void SeekPlayback(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetLooping(false);
+
+    {
+        source.SetStaticBuffer(buffer);
+        source.SetPlaybackPosition(50ms);
+
+        source.Play();
+
+        while (tulpar::audio::Source::State::Stopped != source.GetState())
+        {
+            print(source);
+
+            std::this_thread::sleep_for(100ms);
+        }
+    }
+
+    {
+        source.ResetBuffer();
+
+        source.SetStaticBuffer(buffer);
+        source.SetPlaybackProgress(0.2f);
+
+        source.Play();
+
+        while (tulpar::audio::Source::State::Stopped != source.GetState())
+        {
+            print(source);
+
+            std::this_thread::sleep_for(100ms);
+        }
+    }
+
+    {
+        source.ResetBuffer();
+
+        source.QueueBuffers({{ buffer, buffer, buffer, buffer }});
+        source.SetPlaybackProgress(0.5f);
+
+        source.Play();
+
+        while (tulpar::audio::Source::State::Stopped != source.GetState())
+        {
+            print(source);
+
+            std::this_thread::sleep_for(100ms);
+        }
+    }
+
+    source.Reset();
+}
+
+void MovingListener(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Listener listener = audio.GetListener();
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetStaticBuffer(buffer);
+    source.SetLooping(true);
+    source.Play();
+
+    {
+        float const radius = 1.5f;
+
+        std::chrono::milliseconds const duration = 4000ms;
+        std::chrono::milliseconds const tick = 8ms;
+        std::chrono::milliseconds offset = 0ms;
+
+        while (offset < duration)
+        {
+            float const progress = static_cast<float>(offset.count()) / static_cast<float>(duration.count());
+
+            listener.SetPosition(GetSpiralCoords(radius, progress));
+
+            std::this_thread::sleep_for(tick);
+            offset += tick;
+        }
+    }
+
+    source.Stop();
+    source.Reset();
+}
+
+void RotatingListener(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Listener listener = audio.GetListener();
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetStaticBuffer(buffer);
+    source.SetPosition({{ 0.0f, 0.0f, 1.0f }});
+    source.SetLooping(true);
+    source.Play();
+
+    {
+        float const radius = 1.5f;
+
+        std::chrono::milliseconds const duration = 4000ms;
+        std::chrono::milliseconds const tick = 8ms;
+        std::chrono::milliseconds offset = 0ms;
+
+        while (offset < duration)
+        {
+            float const progress = static_cast<float>(offset.count()) / static_cast<float>(duration.count());
+
+            listener.SetOrientation(tulpar::audio::Listener::Orientation{
+                GetCircleCoords(radius, progress)
+                , {{ 0.0f, 1.0f, 0.0f }}
+            });
+
+            std::this_thread::sleep_for(tick);
+            offset += tick;
+        }
+    }
+
+    source.Stop();
+    source.Reset();
+}
 
 int main()
 {
@@ -84,103 +318,11 @@ int main()
 
         if (success)
         {
-            using namespace std::chrono_literals;
-
-            tulpar::audio::Source source = audio.SpawnSource();
-            source.SetLooping(false);
-
-            {
-                source.SetStaticBuffer(buffer);
-                success = source.Play();
-
-                while (tulpar::audio::Source::State::Stopped != source.GetState())
-                {
-                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
-                    std::cout << "Progress: " << source.GetPlaybackProgress();
-                    std::cout << std::endl;
-
-                    std::this_thread::sleep_for(100ms);
-                }
-            }
-
-            {
-                source.ResetBuffer();
-                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
-
-                source.QueueBuffers({{ buffer, buffer, buffer }});
-
-                float pitch = 1.0f;
-                source.SetPitch(pitch);
-
-                float delta = 0.05f;
-                float factor = -1;
-
-                float x = -0.4f;
-
-                source.Play();
-
-                while (tulpar::audio::Source::State::Stopped != source.GetState())
-                {
-                    pitch += factor * delta;
-                    x += delta * 1e-1;
-
-                    if (pitch <= 0.0f)
-                    {
-                        pitch = 0.0f;
-                        factor = -factor;
-                    }
-                    else if (pitch >= 1.0f)
-                    {
-                        pitch = 1.0f;
-                        factor = -factor;
-                    }
-
-                    source.SetPitch(std::max(pitch, 0.0f));
-                    source.SetPosition({{ x, 0.0f, 1.0f }});
-
-                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
-                    std::cout << "Progress: " << source.GetPlaybackProgress();
-                    std::cout << std::endl;
-
-                    std::this_thread::sleep_for(20ms);
-                }
-            }
-
-            {
-                source.ResetBuffer();
-                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
-
-                source.SetStaticBuffer(buffer);
-                source.SetPlaybackPosition(50ms);
-                success = source.Play();
-
-                while (tulpar::audio::Source::State::Stopped != source.GetState())
-                {
-                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
-                    std::cout << "Progress: " << source.GetPlaybackProgress();
-                    std::cout << std::endl;
-
-                    std::this_thread::sleep_for(100ms);
-                }
-            }
-
-            {
-                source.ResetBuffer();
-                source.SetPosition({{ 0.0, 0.0f, 0.0f }});
-
-                source.SetStaticBuffer(buffer);
-                source.SetPlaybackProgress(0.2f);
-                success = source.Play();
-
-                while (tulpar::audio::Source::State::Stopped != source.GetState())
-                {
-                    std::cout << "Time: " << source.GetPlaybackPosition().count() << "ns\t";
-                    std::cout << "Progress: " << source.GetPlaybackProgress();
-                    std::cout << std::endl;
-
-                    std::this_thread::sleep_for(100ms);
-                }
-            }
+            SimplePlayback(audio, buffer);
+            MovingSource(audio, buffer);
+            SeekPlayback(audio, buffer);
+            MovingListener(audio, buffer);
+            RotatingListener(audio, buffer);
         }
 
         audio.Deinitialize();

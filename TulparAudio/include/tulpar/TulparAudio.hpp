@@ -10,6 +10,7 @@
 #include <tulpar/TulparConfigurator.hpp>
 
 #include <tulpar/audio/Buffer.hpp>
+#include <tulpar/audio/Listener.hpp>
 #include <tulpar/audio/Source.hpp>
 
 #include <mule/asset/Handler.hpp>
@@ -26,6 +27,7 @@ namespace internal
 class BufferCollection;
 class Context;
 class Device;
+class ListenerController;
 class SourceCollection;
 }
 
@@ -43,6 +45,8 @@ public:
     bool Initialize(TulparConfigurator const& config);
     void Deinitialize();
 
+    audio::Listener GetListener() const;
+
     audio::Source GetSource(audio::Source::Handle handle) const;
     audio::Source SpawnSource();
 
@@ -54,6 +58,7 @@ private:
 
     std::shared_ptr<internal::Device> m_device;
     std::shared_ptr<internal::Context> m_context;
+    std::shared_ptr<internal::ListenerController> m_listener;
     std::shared_ptr<internal::BufferCollection> m_buffers;
     std::shared_ptr<internal::SourceCollection> m_sources;
 };

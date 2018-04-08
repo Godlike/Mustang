@@ -9,6 +9,7 @@
 #include <tulpar/internal/BufferCollection.hpp>
 #include <tulpar/internal/Context.hpp>
 #include <tulpar/internal/Device.hpp>
+#include <tulpar/internal/ListenerController.hpp>
 #include <tulpar/internal/SourceCollection.hpp>
 
 #include <tulpar/InternalLoggers.hpp>
@@ -21,6 +22,7 @@ namespace tulpar
 
 TulparAudio::TulparAudio()
     : m_isInitialized(false)
+    , m_listener(nullptr)
     , m_buffers(nullptr)
     , m_sources(nullptr)
 {
@@ -47,6 +49,8 @@ bool TulparAudio::Initialize(TulparConfigurator const& config)
         if (nullptr != m_context.get())
         {
             m_context->MakeCurrent();
+
+            m_listener.reset(new internal::ListenerController());
 
             m_buffers.reset(new internal::BufferCollection());
             m_buffers->Initialize(config.bufferBatch);
@@ -81,6 +85,7 @@ void TulparAudio::Deinitialize()
 
         m_sources.reset();
         m_buffers.reset();
+        m_listener.reset();
 
         m_context.reset();
         m_device.reset();
@@ -89,6 +94,13 @@ void TulparAudio::Deinitialize()
 
         LOG->Debug("TulparAudio::Deinitialize() done");
     }
+}
+
+audio::Listener TulparAudio::GetListener() const
+{
+    assert(true == m_isInitialized);
+
+    return m_listener->Get();
 }
 
 audio::Source TulparAudio::GetSource(audio::Source::Handle handle) const

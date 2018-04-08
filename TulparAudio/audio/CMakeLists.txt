@@ -7,11 +7,13 @@ cmake_policy(VERSION 3.4)
 
 set(AUDIO_HEADERS
     include/tulpar/audio/Buffer.hpp
+    include/tulpar/audio/Listener.hpp
     include/tulpar/audio/Source.hpp
 )
 
 set(AUDIO_SOURCES
     source/Buffer.cpp
+    source/Listener.cpp
     source/Source.cpp
 )
 

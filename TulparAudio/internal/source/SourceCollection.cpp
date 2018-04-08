@@ -345,6 +345,7 @@ bool SourceCollection::ResetSource(SourceHandle source)
     LOG_AUDIO->Debug("Source #{}: reset", source);
 
     Reclaim(source);
+    SetSourceStaticBuffer(source, audio::Buffer().GetHandle());
 
     m_sourceBuffers.erase(source);
     m_sourceQueuedBuffers.erase(source);

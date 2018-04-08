@@ -8,9 +8,11 @@ cmake_policy(VERSION 3.4)
 set(INTERNAL_HEADERS
     include/tulpar/internal/Collection.hpp
     include/tulpar/internal/Collection.imp
+
     include/tulpar/internal/BufferCollection.hpp
     include/tulpar/internal/Context.hpp
     include/tulpar/internal/Device.hpp
+    include/tulpar/internal/ListenerController.hpp
     include/tulpar/internal/SourceCollection.hpp
 )
 
@@ -18,6 +20,7 @@ set(INTERNAL_SOURCES
     source/BufferCollection.cpp
     source/Context.cpp
     source/Device.cpp
+    source/ListenerController.cpp
     source/SourceCollection.cpp
 )
 
