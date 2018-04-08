@@ -104,8 +104,7 @@ private:
 
     std::unordered_map<SourceHandle, BufferHandle> m_sourceBuffers;
     std::unordered_map<SourceHandle, std::vector<BufferHandle>> m_sourceQueuedBuffers;
-
-    Meta m_meta;
+    std::unordered_map<SourceHandle, Meta> m_sourceMeta;
 };
 
 }

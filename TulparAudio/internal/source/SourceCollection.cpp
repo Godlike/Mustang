@@ -117,7 +117,6 @@ SourceCollection::SourceCollection(BufferCollection const& buffers
 )
     : Collection<audio::Source>(generator, reclaimer, deleter)
     , m_buffers(buffers)
-    , m_meta()
 {
 
 }
@@ -209,17 +208,19 @@ bool SourceCollection::SetSourceStaticBuffer(SourceHandle source, BufferHandle b
     {
         using namespace std::chrono_literals;
 
+        Meta& meta = m_sourceMeta[source];
+
         if (0 != buffer)
         {
             audio::Buffer buf = m_buffers.Get(buffer);
 
-            m_meta.activeSampleCount = buf.GetSampleCount();
-            m_meta.activeTotalDuration = buf.GetDuration();
+            meta.activeSampleCount = buf.GetSampleCount();
+            meta.activeTotalDuration = buf.GetDuration();
         }
         else
         {
-            m_meta.activeSampleCount = 0;
-            m_meta.activeTotalDuration = 0ns;
+            meta.activeSampleCount = 0;
+            meta.activeTotalDuration = 0ns;
         }
 
         m_sourceQueuedBuffers[source].clear();
@@ -319,13 +320,15 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
         std::vector<BufferHandle>& queue = m_sourceQueuedBuffers[source];
         queue.reserve(buffers.size());
 
-        m_meta.activeSampleCount = 0;
-        m_meta.activeTotalDuration = 0ns;
+        Meta& meta = m_sourceMeta[source];
+
+        meta.activeSampleCount = 0;
+        meta.activeTotalDuration = 0ns;
 
         for (audio::Buffer const& buffer : buffers)
         {
-            m_meta.activeSampleCount += buffer.GetSampleCount();
-            m_meta.activeTotalDuration += buffer.GetDuration();
+            meta.activeSampleCount += buffer.GetSampleCount();
+            meta.activeTotalDuration += buffer.GetDuration();
 
             queue.push_back(buffer.GetHandle());
         }
@@ -347,6 +350,7 @@ bool SourceCollection::ResetSource(SourceHandle source)
     Reclaim(source);
     SetSourceStaticBuffer(source, audio::Buffer().GetHandle());
 
+    m_sourceMeta.erase(source);
     m_sourceBuffers.erase(source);
     m_sourceQueuedBuffers.erase(source);
 
@@ -431,7 +435,7 @@ bool SourceCollection::PauseSource(SourceHandle source)
 
 std::chrono::nanoseconds SourceCollection::GetSourcePlaybackDuration(SourceHandle source) const
 {
-    return m_meta.activeTotalDuration;
+    return m_sourceMeta.at(source).activeTotalDuration;
 }
 
 std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandle source) const
@@ -564,7 +568,7 @@ float SourceCollection::GetSourcePlaybackProgress(SourceHandle source) const
                 || (audio::Source::State::Paused == state))
         )
         {
-            result = static_cast<float>(sampleOffset) / static_cast<float>(m_meta.activeSampleCount);
+            result = static_cast<float>(sampleOffset) / static_cast<float>(m_sourceMeta.at(source).activeSampleCount);
         }
     }
     else
@@ -581,7 +585,7 @@ bool SourceCollection::SetSourcePlaybackProgress(SourceHandle source, float valu
 
     audio::Buffer buffer = GetSourceActiveBuffer(source);
 
-    ALint sampleOffset = static_cast<ALint>(std::round(static_cast<float>(m_meta.activeSampleCount) * value));
+    ALint sampleOffset = static_cast<ALint>(std::round(static_cast<float>(m_sourceMeta[source].activeSampleCount) * value));
 
     // clear error state
     ALenum alErr = alGetError();
