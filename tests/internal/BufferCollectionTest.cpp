@@ -82,7 +82,7 @@ TEST_CASE("Buffer handle generation", "[collection]")
 
                     CAPTURE(i);
 
-                    REQUIRE(i == object.GetHandle());
+                    REQUIRE(i == *(object.GetSharedHandle()));
                 }
             }
         }
@@ -96,7 +96,7 @@ TEST_CASE("Buffer handle generation", "[collection]")
 
                     CAPTURE(i);
 
-                    REQUIRE(0 == object.GetHandle());
+                    REQUIRE(0 == *(object.GetSharedHandle()));
 
                     object.Reset();
                 }
@@ -137,19 +137,19 @@ TEST_CASE("Buffer collection resize", "[resize][collection]")
             {
                 // create 3
                 T object3 = s_bufferCollection->Spawn();
-                REQUIRE(3 == object3.GetHandle());
+                REQUIRE(3 == *(object3.GetSharedHandle()));
 
                 REQUIRE(true == object3.IsValid());
 
                 // create 0, 2, 1
                 object0 = s_bufferCollection->Spawn();
-                REQUIRE(0 == object0.GetHandle());
+                REQUIRE(0 == *(object0.GetSharedHandle()));
 
                 object2 = s_bufferCollection->Spawn();
-                REQUIRE(2 == object2.GetHandle());
+                REQUIRE(2 == *(object2.GetSharedHandle()));
 
                 object1 = s_bufferCollection->Spawn();
-                REQUIRE(1 == object1.GetHandle());
+                REQUIRE(1 == *(object1.GetSharedHandle()));
 
                 REQUIRE(true == object0.IsValid());
                 REQUIRE(true == object1.IsValid());
@@ -179,7 +179,7 @@ TEST_CASE("Buffer handling", "[buffer]")
                 REQUIRE(true == object0.IsValid());
                 REQUIRE(true == object1.IsValid());
 
-                REQUIRE(object0.GetHandle() != object1.GetHandle());
+                REQUIRE(*(object0.GetSharedHandle()) != *(object1.GetSharedHandle()));
             }
         }
         WHEN("items are copied")
@@ -191,8 +191,8 @@ TEST_CASE("Buffer handling", "[buffer]")
 
             THEN("they have the same handle and validness")
             {
-                REQUIRE(objectA.GetHandle() == objectB.GetHandle());
-                REQUIRE(objectB.GetHandle() == objectC.GetHandle());
+                REQUIRE(*(objectA.GetSharedHandle()) == *(objectB.GetSharedHandle()));
+                REQUIRE(*(objectB.GetSharedHandle()) == *(objectC.GetSharedHandle()));
 
                 REQUIRE(true == objectA.IsValid());
                 REQUIRE(true == objectB.IsValid());

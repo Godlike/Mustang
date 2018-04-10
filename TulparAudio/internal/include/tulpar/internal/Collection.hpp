@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <queue>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -45,10 +46,10 @@ public:
 
 protected:
     void Reclaim(Handle handle);
-    std::vector<Handle> PrepareBatch(uint32_t size);
+    Handles PrepareBatch(uint32_t size);
 
-    virtual T* GenerateObject(Handle handle) const = 0;
-    virtual T* CreateObject(Handle handle) = 0;
+    virtual std::unique_ptr<T> GenerateObject(Handle handle) const = 0;
+    virtual std::unique_ptr<T> CreateObject(Handle handle) = 0;
 
     uint32_t m_batchSize;
 
@@ -56,9 +57,9 @@ protected:
     HandleReclaimer m_reclaimer;
     HandleDeleter m_deleter;
 
-    std::unordered_map<Handle, T*> m_sources;
+    std::unordered_map<Handle, std::unique_ptr<T>> m_objects;
 
-    std::vector<Handle> m_used;
+    Handles m_used;
     std::queue<Handle> m_available;
 
 private:

@@ -75,7 +75,7 @@ bool TulparAudio::Initialize(TulparConfigurator const& config)
     return m_isInitialized;
 }
 
-bool TulparAudio::Reinitialize(TulparConfigurator const& config, DeviceChangeMapping* pMapping)
+bool TulparAudio::Reinitialize(TulparConfigurator const& config)
 {
     assert(true == m_isInitialized);
 
@@ -102,7 +102,7 @@ bool TulparAudio::Reinitialize(TulparConfigurator const& config, DeviceChangeMap
 
                 std::shared_ptr<internal::SourceCollection> newSources = std::make_shared<internal::SourceCollection>(*newBuffers);
                 newSources->Initialize(config.sourceBatch);
-                internal::SourceCollection::MigrationMapping sourceMapping = newSources->InheritCollection(
+                newSources->InheritCollection(
                     *m_sources.get()
                     , bufferMapping
                     , *m_context.get()
@@ -118,12 +118,6 @@ bool TulparAudio::Reinitialize(TulparConfigurator const& config, DeviceChangeMap
                 m_device.reset(pDevice);
 
                 pContext->MakeCurrent();
-
-                if (nullptr != pMapping)
-                {
-                    pMapping->bufferMapping = std::move(bufferMapping);
-                    pMapping->sourceMapping = std::move(sourceMapping);
-                }
 
                 m_isInitialized = true;
             }

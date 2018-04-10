@@ -35,11 +35,10 @@ struct OpenAVBufferHandler
 
 class BufferCollection
     : public Collection<audio::Buffer>
-    , public std::enable_shared_from_this<BufferCollection>
 {
 public:
     using Handle = audio::Buffer::Handle;
-    using MigrationMapping = TulparAudio::BufferMigrationMapping;
+    using MigrationMapping = std::unordered_map<audio::Buffer::Handle, audio::Buffer::Handle>;
 
     BufferCollection(
         Collection<audio::Buffer>::HandleGenerator generator = OpenAVBufferHandler::Generate
@@ -66,8 +65,8 @@ public:
     uint32_t GetFrequency(Handle handle) const;
 
 protected:
-    virtual audio::Buffer* GenerateObject(Handle handle) const override final;
-    virtual audio::Buffer* CreateObject(Handle handle) override final;
+    virtual std::unique_ptr<audio::Buffer> GenerateObject(Handle handle) const override final;
+    virtual std::unique_ptr<audio::Buffer> CreateObject(Handle handle) override final;
 
 private:
     struct BufferInfo

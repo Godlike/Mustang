@@ -14,75 +14,79 @@ namespace audio
 {
 
 Buffer::Buffer()
-    : m_parent()
-    , m_handle(0)
+    : m_pParent(nullptr)
+    , m_handle(std::make_shared<Handle>(0))
 {
 
 }
 
 bool Buffer::IsValid() const
 {
-    return !m_parent.expired() && m_parent.lock()->IsValid(m_handle);
+    return (nullptr != m_handle.get())
+        && (nullptr != m_pParent.get())
+        && (*m_pParent)->IsValid(*m_handle);
 }
 
 bool Buffer::BindData(mule::asset::Handler asset)
 {
     assert(IsValid());
 
-    return m_parent.lock()->SetBufferData(m_handle, asset);
+    return (*m_pParent)->SetBufferData(*m_handle, asset);
 }
 
 std::string Buffer::GetDataName() const
 {
     assert(IsValid());
 
-    return m_parent.lock()->GetBufferName(m_handle);
+    return (*m_pParent)->GetBufferName(*m_handle);
 }
 
 void Buffer::SetDataName(std::string const& value)
 {
     assert(IsValid());
 
-    m_parent.lock()->SetBufferName(m_handle, value);
+    (*m_pParent)->SetBufferName(*m_handle, value);
 }
 
 uint8_t Buffer::GetChannelCount() const
 {
     assert(IsValid());
 
-    return m_parent.lock()->GetBufferChannelCount(m_handle);
+    return (*m_pParent)->GetBufferChannelCount(*m_handle);
 }
 
 uint32_t Buffer::GetFrequencyHz() const
 {
     assert(IsValid());
 
-    return m_parent.lock()->GetBufferFrequencyHz(m_handle);
+    return (*m_pParent)->GetBufferFrequencyHz(*m_handle);
 }
 
 uint32_t Buffer::GetSampleCount() const
 {
     assert(IsValid());
 
-    return m_parent.lock()->GetBufferSampleCount(m_handle);
+    return (*m_pParent)->GetBufferSampleCount(*m_handle);
 }
 
 std::chrono::nanoseconds Buffer::GetDuration() const
 {
     assert(IsValid());
 
-    return m_parent.lock()->GetBufferDuration(m_handle);
+    return (*m_pParent)->GetBufferDuration(*m_handle);
 }
 
 bool Buffer::Reset()
 {
     assert(IsValid());
 
-    return m_parent.lock()->ResetBuffer(m_handle);
+    return (*m_pParent)->ResetBuffer(*m_handle);
 }
 
-Buffer::Buffer(Handle handle, std::weak_ptr<internal::BufferCollection> parent)
-    : m_parent(parent)
+Buffer::Buffer(std::shared_ptr<Handle> handle
+    , std::shared_ptr<internal::BufferCollection*> pParent
+)
+    : m_pParent(pParent)
     , m_handle(handle)
 {
 

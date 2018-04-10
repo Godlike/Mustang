@@ -60,8 +60,7 @@ public:
 
     ~Source() = default;
 
-    Handle GetHandle() const { return m_handle; }
-    operator Handle() const { return m_handle; }
+    std::shared_ptr<Handle> GetSharedHandle() const { return m_handle; }
 
     bool IsValid() const;
 
@@ -111,11 +110,11 @@ public:
 private:
     friend class internal::SourceCollection;
 
-    Source(Handle handle, std::weak_ptr<internal::SourceCollection> parent);
+    Source(std::shared_ptr<Handle> handle
+        , std::shared_ptr<internal::SourceCollection*> parent);
 
-    std::weak_ptr<internal::SourceCollection> m_parent;
-
-    Handle m_handle;
+    std::shared_ptr<internal::SourceCollection*> m_pParent;
+    std::shared_ptr<Handle> m_handle;
 };
 
 std::ostream& operator<<(std::ostream& os, Source::State const& state);

@@ -36,12 +36,10 @@ struct OpenAVSourceHandler
 
 class SourceCollection
     : public Collection<audio::Source>
-    , public std::enable_shared_from_this<SourceCollection>
 {
 public:
     using SourceHandle = audio::Source::Handle;
     using BufferHandle = audio::Buffer::Handle;
-    using MigrationMapping = TulparAudio::SourceMigrationMapping;
 
     SourceCollection(BufferCollection const& buffers
         , Collection<audio::Source>::HandleGenerator generator = OpenAVSourceHandler::Generate
@@ -51,7 +49,7 @@ public:
 
     virtual ~SourceCollection();
 
-    MigrationMapping InheritCollection(SourceCollection const& other
+    void InheritCollection(SourceCollection const& other
         , BufferCollection::MigrationMapping const& bufferMapping
         , Context& oldContext
         , Context& newContext
@@ -101,8 +99,8 @@ public:
     bool SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec);
 
 protected:
-    virtual audio::Source* GenerateObject(SourceHandle handle) const override final;
-    virtual audio::Source* CreateObject(SourceHandle source) override final;
+    virtual std::unique_ptr<audio::Source> GenerateObject(SourceHandle handle) const override final;
+    virtual std::unique_ptr<audio::Source> CreateObject(SourceHandle source) override final;
 
 private:
     struct Meta

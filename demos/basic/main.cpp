@@ -298,16 +298,11 @@ void SwitchingDevice(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
                     hasSwitched = true;
                     sleepTime = 100ms;
 
-                    tulpar::TulparAudio::DeviceChangeMapping mapping;
-
                     std::cout << "device switch started - " << secondDeviceConfig.device.name.c_str() << std::endl;
 
-                    if (audio.Reinitialize(secondDeviceConfig, &mapping))
+                    if (audio.Reinitialize(secondDeviceConfig))
                     {
                         std::cout << "device switch completed" << std::endl;
-
-                        source = audio.GetSource(mapping.sourceMapping[source.GetHandle()]);
-                        buffer = audio.GetBuffer(mapping.bufferMapping[buffer.GetHandle()]);
                     }
                     else
                     {
@@ -345,16 +340,11 @@ void SwitchingDevice(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
                     hasSwitched = true;
                     sleepTime = 100ms;
 
-                    tulpar::TulparAudio::DeviceChangeMapping mapping;
-
                     std::cout << "device switch started - " << firstDeviceConfig.device.name.c_str() << std::endl;
 
-                    if (audio.Reinitialize(firstDeviceConfig, &mapping))
+                    if (audio.Reinitialize(firstDeviceConfig))
                     {
                         std::cout << "device switch completed" << std::endl;
-
-                        source = audio.GetSource(mapping.sourceMapping[source.GetHandle()]);
-                        buffer = audio.GetBuffer(mapping.bufferMapping[buffer.GetHandle()]);
                     }
                     else
                     {

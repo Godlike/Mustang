@@ -56,7 +56,7 @@ template<typename T>
 template<typename T>
     bool Collection<T>::IsValid(Handle handle) const
 {
-    return m_sources.cend() != m_sources.find(handle);
+    return m_objects.cend() != m_objects.find(handle);
 }
 
 template<typename T>
@@ -72,11 +72,9 @@ template<typename T>
     m_available.pop();
     m_used.push_back(handle);
 
-    T* pObject = CreateObject(handle);
+    m_objects[handle] = CreateObject(handle);
 
-    m_sources[handle] = pObject;
-
-    return *pObject;
+    return *(m_objects[handle]);
 }
 
 template<typename T>
@@ -90,13 +88,11 @@ template<typename T>
 
     m_used.erase(usedIt);
     m_available.push(handle);
-
-    delete m_sources[handle];
-    m_sources.erase(handle);
+    m_objects.erase(handle);
 }
 
 template<typename T>
-    std::vector<typename Collection<T>::Handle> Collection<T>::PrepareBatch(uint32_t size)
+    typename Collection<T>::Handles Collection<T>::PrepareBatch(uint32_t size)
 {
     if (m_available.size() < size)
     {
@@ -106,7 +102,7 @@ template<typename T>
         PushHandles(m_generator(batchCount * m_batchSize));
     }
 
-    std::vector<typename Collection<T>::Handle> result;
+    typename Collection<T>::Handles result;
     result.reserve(size);
 
     for (uint32_t i = 0; i < size; ++i)
@@ -116,9 +112,7 @@ template<typename T>
         m_available.pop();
         m_used.push_back(handle);
 
-        T* pObject = CreateObject(handle);
-
-        m_sources[handle] = pObject;
+        m_objects[handle] = CreateObject(handle);
 
         result.push_back(handle);
     }

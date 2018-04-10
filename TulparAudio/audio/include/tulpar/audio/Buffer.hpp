@@ -40,8 +40,7 @@ public:
 
     ~Buffer() = default;
 
-    Handle GetHandle() const { return m_handle; }
-    operator Handle() const { return m_handle; }
+    std::shared_ptr<Handle> GetSharedHandle() const { return m_handle; }
 
     bool IsValid() const;
 
@@ -60,11 +59,11 @@ public:
 private:
     friend class internal::BufferCollection;
 
-    Buffer(Handle handle, std::weak_ptr<internal::BufferCollection> parent);
+    Buffer(std::shared_ptr<Handle> pHandle
+        , std::shared_ptr<internal::BufferCollection*> pParent);
 
-    std::weak_ptr<internal::BufferCollection> m_parent;
-
-    Handle m_handle;
+    std::shared_ptr<internal::BufferCollection*> m_pParent;
+    std::shared_ptr<Handle> m_handle;
 };
 
 }

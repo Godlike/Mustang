@@ -148,15 +148,13 @@ struct MigrationInfo
 
 }
 
-SourceCollection::MigrationMapping SourceCollection::InheritCollection(SourceCollection const& other
+void SourceCollection::InheritCollection(SourceCollection const& other
     , BufferCollection::MigrationMapping const& bufferMapping
     , Context& oldContext
     , Context& newContext
 )
 {
     assert(this != &other);
-
-    MigrationMapping result;
 
     std::vector<SourceHandle> const& old = other.m_used;
 
@@ -235,7 +233,15 @@ SourceCollection::MigrationMapping SourceCollection::InheritCollection(SourceCol
                 MigrationInfo const& migrate = info.at(oldHandle);
 
                 SourceHandle newHandle = batch[i++];
-                result[oldHandle] = newHandle;
+
+                {
+                    audio::Source& oldObject = *(other.m_objects.at(oldHandle));
+                    *(oldObject.m_pParent) = this;
+                    *(oldObject.m_handle) = newHandle;
+
+                    audio::Source& newObject = *(m_objects.at(newHandle));
+                    newObject = oldObject;
+                }
 
                 switch (migrate.state)
                 {
@@ -303,8 +309,6 @@ SourceCollection::MigrationMapping SourceCollection::InheritCollection(SourceCol
 
         delete[] tmpSources;
     }
-
-    return result;
 }
 
 audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
@@ -483,7 +487,7 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
     std::transform(buffers.begin(), buffers.end(), tmp.begin(),
         [](audio::Buffer const& buffer) -> ALuint
         {
-            return static_cast<ALuint>(buffer.GetHandle());
+            return static_cast<ALuint>(*(buffer.GetSharedHandle()));
         }
     );
 
@@ -511,10 +515,10 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
             meta.activeSampleCount += buffer.GetSampleCount();
             meta.activeTotalDuration += buffer.GetDuration();
 
-            queue.push_back(buffer.GetHandle());
+            queue.push_back(*(buffer.GetSharedHandle()));
         }
 
-        m_sourceBuffers[source] = audio::Buffer();
+        m_sourceBuffers[source] = *(audio::Buffer().GetSharedHandle());
     }
     else
     {
@@ -529,7 +533,7 @@ bool SourceCollection::ResetSource(SourceHandle source)
     LOG_AUDIO->Debug("Source #{}: reset", source);
 
     Reclaim(source);
-    SetSourceStaticBuffer(source, audio::Buffer().GetHandle());
+    SetSourceStaticBuffer(source, *(audio::Buffer().GetSharedHandle()));
 
     m_sourceMeta.erase(source);
     m_sourceBuffers.erase(source);
@@ -1084,12 +1088,16 @@ bool SourceCollection::SetSourcePosition(SourceHandle source, std::array<float, 
     return AL_NO_ERROR == alErr;
 }
 
-audio::Source* SourceCollection::GenerateObject(SourceHandle source) const
+std::unique_ptr<audio::Source> SourceCollection::GenerateObject(SourceHandle source) const
 {
-    return new audio::Source(source, const_cast<SourceCollection*>(this)->shared_from_this());
+    return std::unique_ptr<audio::Source>(
+        new audio::Source(std::make_shared<SourceHandle>(source)
+            , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
+        )
+    );
 }
 
-audio::Source* SourceCollection::CreateObject(SourceHandle source)
+std::unique_ptr<audio::Source> SourceCollection::CreateObject(SourceHandle source)
 {
     m_sourceBuffers.erase(source);
     m_sourceQueuedBuffers.erase(source);

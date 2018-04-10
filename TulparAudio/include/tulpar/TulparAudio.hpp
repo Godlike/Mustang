@@ -36,15 +36,6 @@ class SourceCollection;
 class TulparAudio
 {
 public:
-    using BufferMigrationMapping = std::unordered_map<audio::Buffer::Handle, audio::Buffer::Handle>;
-    using SourceMigrationMapping = std::unordered_map<audio::Source::Handle, audio::Source::Handle>;
-
-    struct DeviceChangeMapping
-    {
-        BufferMigrationMapping bufferMapping;
-        SourceMigrationMapping sourceMapping;
-    };
-
     TulparAudio();
 
     TulparAudio(TulparAudio const& other) = delete;
@@ -53,7 +44,7 @@ public:
     ~TulparAudio();
 
     bool Initialize(TulparConfigurator const& config);
-    bool Reinitialize(TulparConfigurator const& config, DeviceChangeMapping* pMapping = nullptr);
+    bool Reinitialize(TulparConfigurator const& config);
     void Deinitialize();
 
     audio::Listener GetListener() const;
