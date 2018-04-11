@@ -1088,21 +1088,18 @@ bool SourceCollection::SetSourcePosition(SourceHandle source, std::array<float, 
     return AL_NO_ERROR == alErr;
 }
 
-std::unique_ptr<audio::Source> SourceCollection::GenerateObject(SourceHandle source) const
+std::unique_ptr<audio::Source> SourceCollection::CreateObject(SourceHandle source)
 {
+    assert(m_objects.cend() == m_objects.find(source));
+
+    m_sourceBuffers.erase(source);
+    m_sourceQueuedBuffers.erase(source);
+
     return std::unique_ptr<audio::Source>(
         new audio::Source(std::make_shared<SourceHandle>(source)
             , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
         )
-    );
-}
-
-std::unique_ptr<audio::Source> SourceCollection::CreateObject(SourceHandle source)
-{
-    m_sourceBuffers.erase(source);
-    m_sourceQueuedBuffers.erase(source);
-
-    return GenerateObject(source);
+    );;
 }
 
 }

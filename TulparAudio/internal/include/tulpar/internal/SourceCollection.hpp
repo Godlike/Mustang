@@ -99,7 +99,6 @@ public:
     bool SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec);
 
 protected:
-    virtual std::unique_ptr<audio::Source> GenerateObject(SourceHandle handle) const override final;
     virtual std::unique_ptr<audio::Source> CreateObject(SourceHandle source) override final;
 
 private:

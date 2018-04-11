@@ -65,7 +65,6 @@ public:
     uint32_t GetFrequency(Handle handle) const;
 
 protected:
-    virtual std::unique_ptr<audio::Buffer> GenerateObject(Handle handle) const override final;
     virtual std::unique_ptr<audio::Buffer> CreateObject(Handle handle) override final;
 
 private:

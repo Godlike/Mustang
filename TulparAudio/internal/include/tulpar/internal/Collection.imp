@@ -50,7 +50,9 @@ template<typename T>
 template<typename T>
     T Collection<T>::Get(Handle handle) const
 {
-    return *GenerateObject(handle);
+    assert(m_objects.cend() != m_objects.find(handle));
+
+    return *m_objects.at(handle);
 }
 
 template<typename T>

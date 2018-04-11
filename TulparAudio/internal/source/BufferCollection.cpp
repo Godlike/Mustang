@@ -270,20 +270,17 @@ bool BufferCollection::ResetBuffer(Handle handle)
     return true;
 }
 
-std::unique_ptr<audio::Buffer> BufferCollection::GenerateObject(Handle handle) const
+std::unique_ptr<audio::Buffer> BufferCollection::CreateObject(Handle handle)
 {
+    assert(m_objects.cend() == m_objects.find(handle));
+
+    SetBufferName(handle, std::string());
+
     return std::unique_ptr<audio::Buffer>(
         new audio::Buffer(std::make_shared<Handle>(handle)
             , std::make_shared<BufferCollection*>(const_cast<BufferCollection*>(this))
         )
     );
-}
-
-std::unique_ptr<audio::Buffer> BufferCollection::CreateObject(Handle handle)
-{
-    SetBufferName(handle, std::string());
-
-    return GenerateObject(handle);
 }
 
 }
