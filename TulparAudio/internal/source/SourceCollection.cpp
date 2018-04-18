@@ -235,11 +235,11 @@ void SourceCollection::InheritCollection(SourceCollection const& other
                 SourceHandle newHandle = batch[i++];
 
                 {
-                    audio::Source& oldObject = *(other.m_objects.at(oldHandle));
+                    audio::Source const& oldObject = other.m_objects.at(oldHandle);
                     *(oldObject.m_pParent) = this;
                     *(oldObject.m_handle) = newHandle;
 
-                    audio::Source& newObject = *(m_objects.at(newHandle));
+                    audio::Source& newObject = m_objects.at(newHandle);
                     newObject = oldObject;
                 }
 
@@ -1088,18 +1088,16 @@ bool SourceCollection::SetSourcePosition(SourceHandle source, std::array<float, 
     return AL_NO_ERROR == alErr;
 }
 
-std::unique_ptr<audio::Source> SourceCollection::CreateObject(SourceHandle source)
+audio::Source SourceCollection::CreateObject(SourceHandle source)
 {
     assert(m_objects.cend() == m_objects.find(source));
 
     m_sourceBuffers.erase(source);
     m_sourceQueuedBuffers.erase(source);
 
-    return std::unique_ptr<audio::Source>(
-        new audio::Source(std::make_shared<SourceHandle>(source)
+    return audio::Source(std::make_shared<SourceHandle>(source)
             , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
-        )
-    );;
+    );
 }
 
 }

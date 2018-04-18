@@ -52,7 +52,7 @@ template<typename T>
 {
     assert(m_objects.cend() != m_objects.find(handle));
 
-    return *m_objects.at(handle);
+    return m_objects.at(handle);
 }
 
 template<typename T>
@@ -76,7 +76,7 @@ template<typename T>
 
     m_objects[handle] = CreateObject(handle);
 
-    return *(m_objects[handle]);
+    return m_objects[handle];
 }
 
 template<typename T>

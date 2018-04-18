@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <queue>
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -146,9 +145,9 @@ protected:
      *
      *  Initializes an object for given @p handle and stores it in @p m_objects
      *
-     *  @return unique_ptr holding generated object
+     *  @return generated object
      */
-    virtual std::unique_ptr<T> CreateObject(Handle handle) = 0;
+    virtual T CreateObject(Handle handle) = 0;
 
     //! A batch size used when calling @p m_generator
     uint32_t m_batchSize;
@@ -163,7 +162,7 @@ protected:
     HandleDeleter m_deleter;
 
     //! An underlying collection of objects associated with handles
-    std::unordered_map<Handle, std::unique_ptr<T>> m_objects;
+    std::unordered_map<Handle, T> m_objects;
 
     //! A collection of used handles
     Handles m_used;

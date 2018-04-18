@@ -17,7 +17,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -65,7 +64,7 @@ public:
     uint32_t GetFrequency(Handle handle) const;
 
 protected:
-    virtual std::unique_ptr<audio::Buffer> CreateObject(Handle handle) override final;
+    virtual audio::Buffer CreateObject(Handle handle) override final;
 
 private:
     struct BufferInfo

@@ -125,11 +125,11 @@ BufferCollection::MigrationMapping BufferCollection::InheritCollection(BufferCol
             Handle newHandle = batch[i++];
 
             {
-                audio::Buffer& oldObject = *(other.m_objects.at(oldHandle));
+                audio::Buffer const& oldObject = other.m_objects.at(oldHandle);
                 *(oldObject.m_pParent) = this;
                 *(oldObject.m_handle) = newHandle;
 
-                audio::Buffer& newObject = *(m_objects.at(newHandle));
+                audio::Buffer& newObject = m_objects.at(newHandle);
                 newObject = oldObject;
             }
 
@@ -270,16 +270,14 @@ bool BufferCollection::ResetBuffer(Handle handle)
     return true;
 }
 
-std::unique_ptr<audio::Buffer> BufferCollection::CreateObject(Handle handle)
+audio::Buffer BufferCollection::CreateObject(Handle handle)
 {
     assert(m_objects.cend() == m_objects.find(handle));
 
     SetBufferName(handle, std::string());
 
-    return std::unique_ptr<audio::Buffer>(
-        new audio::Buffer(std::make_shared<Handle>(handle)
-            , std::make_shared<BufferCollection*>(const_cast<BufferCollection*>(this))
-        )
+    return audio::Buffer(std::make_shared<Handle>(handle)
+        , std::make_shared<BufferCollection*>(const_cast<BufferCollection*>(this))
     );
 }
 

@@ -18,7 +18,6 @@
 #include <tulpar/TulparAudio.hpp>
 
 #include <array>
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -99,7 +98,7 @@ public:
     bool SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec);
 
 protected:
-    virtual std::unique_ptr<audio::Source> CreateObject(SourceHandle source) override final;
+    virtual audio::Source CreateObject(SourceHandle source) override final;
 
 private:
     struct Meta
