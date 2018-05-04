@@ -59,7 +59,7 @@ public:
 
     bool SetBufferData(Handle handle, mule::asset::Handler asset);
 
-    bool ResetBuffer(Handle handle);
+    void ResetBuffer(Handle handle);
 
     uint32_t GetFrequency(Handle handle) const;
 

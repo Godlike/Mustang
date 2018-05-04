@@ -259,15 +259,13 @@ bool BufferCollection::SetBufferData(Handle handle, mule::asset::Handler asset)
     }
 }
 
-bool BufferCollection::ResetBuffer(Handle handle)
+void BufferCollection::ResetBuffer(Handle handle)
 {
     LOG_AUDIO->Trace("Buffer #{}: reset", handle);
 
     Reclaim(handle);
 
     m_bufferInfo.erase(handle);
-
-    return true;
 }
 
 audio::Buffer BufferCollection::CreateObject(Handle handle)

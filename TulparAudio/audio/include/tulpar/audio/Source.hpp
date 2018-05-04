@@ -74,7 +74,7 @@ public:
     uint32_t GetQueueIndex() const;
     bool QueueBuffers(std::vector<Buffer> const& buffers);
 
-    bool Reset();
+    void Reset();
 
     bool Play();
     bool Stop();

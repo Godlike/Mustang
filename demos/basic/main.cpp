@@ -92,6 +92,90 @@ void SimplePlayback(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
     source.Reset();
 }
 
+void PausePlayback(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetLooping(false);
+    source.SetStaticBuffer(buffer);
+
+    source.Play();
+
+    while (tulpar::audio::Source::State::Stopped != source.GetState())
+    {
+        std::this_thread::sleep_for(100ms);
+
+        print(source);
+
+        switch (source.GetState())
+        {
+            case tulpar::audio::Source::State::Paused:
+            {
+                source.Play();
+                break;
+            }
+            case tulpar::audio::Source::State::Playing:
+            {
+                source.Pause();
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    source.Reset();
+}
+
+void StopPlayback(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
+{
+    using namespace std::chrono_literals;
+
+    tulpar::audio::Source source = audio.SpawnSource();
+
+    source.SetLooping(false);
+    source.SetStaticBuffer(buffer);
+
+    source.Play();
+
+    bool stop = false;
+
+    while (!stop || tulpar::audio::Source::State::Stopped != source.GetState())
+    {
+        std::this_thread::sleep_for(100ms);
+
+        print(source);
+
+        if (!stop)
+        {
+            switch (source.GetState())
+            {
+                case tulpar::audio::Source::State::Stopped:
+                {
+                    stop = true;
+                    source.Play();
+                    break;
+                }
+                case tulpar::audio::Source::State::Playing:
+                {
+                    source.Stop();
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    source.Reset();
+}
+
 void MovingSource(tulpar::TulparAudio& audio, tulpar::audio::Buffer& buffer)
 {
     using namespace std::chrono_literals;
@@ -418,6 +502,8 @@ int main()
         if (success)
         {
             SimplePlayback(audio, buffer);
+            PausePlayback(audio, buffer);
+            StopPlayback(audio, buffer);
             MovingSource(audio, buffer);
             SeekPlayback(audio, buffer);
             MovingListener(audio, buffer);

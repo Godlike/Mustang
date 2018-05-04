@@ -76,11 +76,11 @@ std::chrono::nanoseconds Buffer::GetDuration() const
     return (*m_pParent)->GetBufferDuration(*m_handle);
 }
 
-bool Buffer::Reset()
+void Buffer::Reset()
 {
     assert(IsValid());
 
-    return (*m_pParent)->ResetBuffer(*m_handle);
+    (*m_pParent)->ResetBuffer(*m_handle);
 }
 
 Buffer::Buffer(std::shared_ptr<Handle> handle

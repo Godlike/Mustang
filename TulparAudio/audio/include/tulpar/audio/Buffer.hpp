@@ -54,7 +54,7 @@ public:
     uint32_t GetSampleCount() const;
     std::chrono::nanoseconds GetDuration() const;
 
-    bool Reset();
+    void Reset();
 
 private:
     friend class internal::BufferCollection;

@@ -119,11 +119,6 @@ SourceCollection::SourceCollection(BufferCollection const& buffers
 
 }
 
-SourceCollection::~SourceCollection()
-{
-
-}
-
 namespace
 {
 
@@ -528,7 +523,7 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
     return AL_NO_ERROR == alErr;
 }
 
-bool SourceCollection::ResetSource(SourceHandle source)
+void SourceCollection::ResetSource(SourceHandle source)
 {
     LOG_AUDIO->Debug("Source #{}: reset", source);
 
@@ -538,8 +533,6 @@ bool SourceCollection::ResetSource(SourceHandle source)
     m_sourceMeta.erase(source);
     m_sourceBuffers.erase(source);
     m_sourceQueuedBuffers.erase(source);
-
-    return true;
 }
 
 bool SourceCollection::PlaySource(SourceHandle source)

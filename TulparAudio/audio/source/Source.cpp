@@ -84,11 +84,11 @@ bool Source::QueueBuffers(std::vector<Buffer> const& buffers)
     return (*m_pParent)->QueueSourceBuffers(*m_handle, buffers);
 }
 
-bool Source::Reset()
+void Source::Reset()
 {
     assert(IsValid());
 
-    return (*m_pParent)->ResetSource(*m_handle);
+    (*m_pParent)->ResetSource(*m_handle);
 }
 
 bool Source::Play()
