@@ -19,6 +19,7 @@ namespace tulpar
 namespace internal
 {
 
+/** @brief  Controller working with listener object */
 class ListenerController
     : public std::enable_shared_from_this<ListenerController>
 {
@@ -30,15 +31,25 @@ public:
 
     ~ListenerController() = default;
 
+    //! Creates listener object tied to this controller
     audio::Listener Get() const;
 
+    //! Returns listener sound gain
     float GetListenerGain() const;
+
+    //! Sets listener sound gain
     bool SetListenerGain(float value);
 
+    //! Returns listener position in space
     std::array<float, 3> GetListenerPosition() const;
+
+    //! Sets listener position in space
     bool SetListenerPosition(std::array<float, 3> const& vec);
 
+    //! Returns listener orientation in space
     audio::Listener::Orientation GetListenerOrientation() const;
+
+    //! Sets listener orientation in space
     bool SetListenerOrientation(audio::Listener::Orientation const& orientation);
 };
 
