@@ -1,0 +1,12 @@
+[submodule "TulparAudio/godlike/Mule"]
+	path = TulparAudio/godlike/Mule
+	url = https://github.com/Godlike/Mule.git
+[submodule "TulparAudio/third_party/stb"]
+	path = TulparAudio/third_party/stb
+	url = https://github.com/nothings/stb.git
+[submodule "TulparAudio/third_party/glm"]
+	path = TulparAudio/third_party/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "third_party/Catch2"]
+	path = third_party/Catch2
+	url = https://github.com/catchorg/Catch2
