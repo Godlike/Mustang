@@ -1,0 +1,135 @@
+/*
+* Copyright (C) 2018 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
+*/
+
+#include <tulpar/internal/Collection.hpp>
+
+#include <algorithm>
+#include <cassert>
+
+namespace tulpar
+{
+namespace internal
+{
+
+template<typename T>
+    Collection<T>::Collection(
+        HandleGenerator generator
+        , HandleReclaimer reclaimer
+        , HandleDeleter deleter
+    )
+        : m_batchSize(1)
+        , m_generator(generator)
+        , m_reclaimer(reclaimer)
+        , m_deleter(deleter)
+{
+
+}
+
+template<typename T>
+    Collection<T>::~Collection()
+{
+    m_deleter(m_used);
+}
+
+template<typename T>
+    void Collection<T>::Initialize(uint32_t batchSize)
+{
+    assert(batchSize != 0);
+
+    m_batchSize = batchSize;
+
+    if (m_available.size() < batchSize)
+    {
+        PushHandles(m_generator(batchSize));
+    }
+}
+
+template<typename T>
+    T Collection<T>::Get(Handle handle) const
+{
+    assert(m_objects.cend() != m_objects.find(handle));
+
+    return m_objects.at(handle);
+}
+
+template<typename T>
+    bool Collection<T>::IsValid(Handle handle) const
+{
+    return m_objects.cend() != m_objects.find(handle);
+}
+
+template<typename T>
+    T Collection<T>::Spawn()
+{
+    if (m_available.empty())
+    {
+        PushHandles(m_generator(m_batchSize));
+    }
+
+    Handle handle = m_available.front();
+
+    m_available.pop();
+    m_used.push_back(handle);
+
+    m_objects[handle] = CreateObject(handle);
+
+    return m_objects[handle];
+}
+
+template<typename T>
+    void Collection<T>::Reclaim(Handle handle)
+{
+    auto usedIt = std::find(m_used.begin(), m_used.end(), handle);
+
+    assert(m_used.cend() != usedIt);
+
+    m_reclaimer(handle);
+
+    m_used.erase(usedIt);
+    m_available.push(handle);
+    m_objects.erase(handle);
+}
+
+template<typename T>
+    typename Collection<T>::Handles Collection<T>::PrepareBatch(uint32_t size)
+{
+    if (m_available.size() < size)
+    {
+        uint32_t const count = size - m_available.size();
+        uint32_t const batchCount = (count + m_batchSize) / m_batchSize;
+
+        PushHandles(m_generator(batchCount * m_batchSize));
+    }
+
+    typename Collection<T>::Handles result;
+    result.reserve(size);
+
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        Handle handle = m_available.front();
+
+        m_available.pop();
+        m_used.push_back(handle);
+
+        m_objects[handle] = CreateObject(handle);
+
+        result.push_back(handle);
+    }
+
+    return result;
+}
+
+template<typename T>
+    void Collection<T>::PushHandles(Handles const& handles)
+{
+    for (Handle handle : handles)
+    {
+        m_available.push(handle);
+    }
+}
+
+}
+}
