@@ -165,7 +165,7 @@ public:
 
     /** @brief  Starts playing given source
      *
-     *  Changes source state to audio::Source::Playing. After playback is
+     *  Changes source state to audio::Source::Playing. When playback
      *  is complete, source state is changed to audio::Source::Stopped
      *  unless current source is looping
      *
@@ -194,7 +194,7 @@ public:
      */
     bool StopSource(SourceHandle source);
 
-    /** @brief  Rewinds given source back to the start and stops it
+    /** @brief  Stops playing given source and rewinds it back to start
      *
      *  Stops the source, resets progress and changes its state back to
      *  audio::Source::Initial
@@ -203,7 +203,7 @@ public:
      *
      *  @param  source  valid source handle
      *
-     *  @return @c true if source was rewound , @c false otherwise
+     *  @return @c true if source was rewound, @c false otherwise
      */
     bool RewindSource(SourceHandle source);
 
@@ -239,7 +239,7 @@ public:
     /** @brief  Returns relativeness flag for given source
      *
      *  If source is relative then its position is treated as relative to that
-     *  of listener, otherwise it is treated absolute
+     *  of a listener, otherwise it is treated as absolute
      *
      *  @param  source  valid source handle
      *
@@ -250,7 +250,7 @@ public:
     /** @brief  Sets relativeness flag for given source
      *
      *  If source is relative then its position is treated as relative to that
-     *  of listener, otherwise it is treated absolute
+     *  of a listener, otherwise it is treated as absolute
      *
      *  @param  source  valid source handle
      *  @param  flag    value to be set
@@ -262,7 +262,7 @@ public:
     /** @brief  Returns looping flag for given source
      *
      *  If source is looping then instead of going to audio::Source::Stopped
-     *  state after playback is finished, it would instead go back to
+     *  state when playback is finished, it would instead go back to
      *  audio::Source::Initial and start playback from the start
      *
      *  @param  source  valid source handle
@@ -274,7 +274,7 @@ public:
     /** @brief  Sets looping flag for given source
      *
      *  If source is looping then instead of going to audio::Source::Stopped
-     *  state after playback is finished, it would instead go back to
+     *  state when playback is finished, it would instead go back to
      *  audio::Source::Initial and start playback from the start
      *
      *  @param  source  valid source handle

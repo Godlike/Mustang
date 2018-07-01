@@ -24,11 +24,16 @@ class ListenerController
     : public std::enable_shared_from_this<ListenerController>
 {
 public:
+    //! Default constructor
     ListenerController() = default;
 
+    //! Disable copy constructor
     ListenerController(ListenerController const& other) = delete;
+
+    //! Disable assignment operator
     ListenerController& operator=(ListenerController const& other) = delete;
 
+    //! Default destructor
     ~ListenerController() = default;
 
     //! Creates listener object tied to this controller

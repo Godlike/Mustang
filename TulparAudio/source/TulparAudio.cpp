@@ -22,6 +22,8 @@ namespace tulpar
 
 TulparAudio::TulparAudio()
     : m_isInitialized(false)
+    , m_device(nullptr)
+    , m_context(nullptr)
     , m_listener(new internal::ListenerController())
     , m_buffers(nullptr)
     , m_sources(nullptr)

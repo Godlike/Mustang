@@ -97,7 +97,7 @@ public:
      */
     MigrationMapping InheritCollection(BufferCollection const& other);
 
-    //! Returns buffer name associated
+    //! Returns buffer name
     std::string GetBufferName(Handle handle) const;
 
     //! Sets buffer name
@@ -127,7 +127,7 @@ public:
      */
     bool SetBufferData(Handle handle, mule::asset::Handler asset);
 
-    //! @brief  Resets given buffer
+    //! Resets given buffer
     void ResetBuffer(Handle handle);
 
 protected:
