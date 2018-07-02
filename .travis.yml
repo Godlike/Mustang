@@ -1,0 +1,71 @@
+branches:
+  except:
+    gh-pages
+
+env:
+  global:
+    - GH_REPO_NAME: Tulpar
+    - GH_REPO_REF: github.com/Godlike/Tulpar.git
+    - BUILD_DIR: build
+
+sudo: required
+os: linux
+dist: trusty
+language: cpp
+compiler: gcc
+
+matrix:
+  include:
+  - compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+    env:
+    - COMPILER=g++-6
+  - addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+        - doxygen
+        - doxygen-doc
+        - doxygen-latex
+        - doxygen-gui
+        - graphviz
+    env:
+    - COMPILER=g++-6
+    - BUILD_DOCUMENTATION=true
+  - compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.9
+        packages:
+        - g++-6
+        - clang-3.9
+    env:
+    - COMPILER=clang++-3.9
+
+git:
+  submodules: false
+
+before_install:
+- sudo apt-get -qq update
+- git submodule update --init --recursive
+
+script:
+- cd $TRAVIS_BUILD_DIR
+- chmod +x travisBuildScript.sh
+- ./travisBuildScript.sh
+
+notifications:
+  email:
+    recipients:
+    - odintsoff@gmail.com
+    on_success: change
+    on_failure: always

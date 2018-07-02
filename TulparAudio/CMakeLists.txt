@@ -10,6 +10,8 @@ project(${TULPAR_AUDIO_NAME})
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+find_package(Threads)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if (UNIX)
@@ -29,6 +31,8 @@ message(STATUS "Version: ${TULPAR_VERSION}")
 if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
+
+add_subdirectory(${OPENAL_ROOT_DIR})
 
 if (NOT MULE_FOUND)
     include(MuleConfig)
@@ -107,6 +111,7 @@ add_library(${TULPAR_AUDIO_LIB}
 target_link_libraries(${TULPAR_AUDIO_LIB}
     ${MULE_UTILITIES_LIB}
     ${OPENAL_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
 )
 
 set_target_properties(

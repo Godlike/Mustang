@@ -28,7 +28,7 @@ include(GlmConfig)
 find_package(GLM)
 
 # OpenAL
-find_package(OpenAL REQUIRED)
+include(OpenALConfig)
 
 # STB
 include(stb)
