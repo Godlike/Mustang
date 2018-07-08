@@ -10,7 +10,7 @@ option(TULPAR_BUILD_DOCUMENTATION "Build Tulpar documentation" OFF)
 option(TULPAR_BUILD_DEMOS "Build Tulpar demos" ON)
 option(TULPAR_BUILD_TESTS "Build Tulpar tests" ON)
 
-message(STATUS "${PROJECT_NAME} configuration:")
+message(STATUS "${PROJECT_NAME} ${CMAKE_BUILD_TYPE} configuration:")
 message(STATUS "-- TULPAR_BUILD_DOCUMENTATION: ${TULPAR_BUILD_DOCUMENTATION}")
 message(STATUS "-- TULPAR_BUILD_DEMOS: ${TULPAR_BUILD_DEMOS}")
 message(STATUS "-- TULPAR_BUILD_TESTS: ${TULPAR_BUILD_TESTS}")
