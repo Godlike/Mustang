@@ -7,7 +7,14 @@ cmake_policy(VERSION 3.4)
 
 project(${TULPAR_AUDIO_NAME})
 
-set(CMAKE_CXX_STANDARD 14)
+set(TULPAR_LIB_ALIAS Tulpar::Audio)
+
+add_library(${PROJECT_NAME})
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(${TULPAR_LIB_ALIAS} ALIAS ${PROJECT_NAME})
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 find_package(Threads)
@@ -108,31 +115,31 @@ if (MSVC)
     )
 endif()
 
-add_library(${TULPAR_AUDIO_LIB}
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        ${TULPAR_AUDIO_HEADERS}
+        ${TULPAR_AUDIO_SOURCES}
 
-    ${TULPAR_AUDIO_HEADERS}
-    ${TULPAR_AUDIO_SOURCES}
+        ${TULPAR_AUDIO_EXTRA}
 
-    ${TULPAR_AUDIO_EXTRA}
-
-    $<TARGET_OBJECTS:audio>
-    $<TARGET_OBJECTS:tulpar_internal>
+        $<TARGET_OBJECTS:audio>
+        $<TARGET_OBJECTS:tulpar_internal>
 )
 
-target_link_libraries(${TULPAR_AUDIO_LIB}
-    ${MULE_UTILITIES_LIB}
-    ${OPENAL_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        Mule::Utilities
+        ${OPENAL_LIBRARY}
 )
 
 set_target_properties(
-    ${TULPAR_AUDIO_LIB}
+    ${PROJECT_NAME}
     PROPERTIES
         VERSION ${TULPAR_VERSION}
         SOVERSION ${TULPAR_SOVERSION}
 )
 
-install( TARGETS ${TULPAR_AUDIO_LIB}
+install( TARGETS ${PROJECT_NAME}
     COMPONENT tulpar_libraries
     RUNTIME DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
     LIBRARY DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
@@ -166,22 +173,27 @@ endif()
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/TulparAudioConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     VERSION ${TULPAR_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/TulparAudioConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/TulparAudioConfig.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.gen
 
     @ONLY
 )
 
+file(GENERATE
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    INPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.gen
+)
+
 install(
     FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/TulparAudioConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/TulparAudioConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
     COMPONENT tulpar_headers
 )
