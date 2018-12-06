@@ -2,8 +2,20 @@
 # This code is licensed under the MIT license (MIT)
 # (http://opensource.org/licenses/MIT)
 
-cmake_minimum_required(VERSION 3.4)
-cmake_policy(VERSION 3.4)
+cmake_minimum_required(VERSION 3.8)
+cmake_policy(VERSION 3.8)
+
+project(TulparAudio_Internal)
+
+add_library(${PROJECT_NAME} STATIC "")
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(Tulpar::Audio::Internal ALIAS ${PROJECT_NAME})
+
+# OpenAL
+include(OpenALConfig)
+
+# STB
+include(stb)
 
 set(INTERNAL_HEADERS
     include/tulpar/internal/Collection.hpp
@@ -24,13 +36,31 @@ set(INTERNAL_SOURCES
     source/SourceCollection.cpp
 )
 
-add_library(tulpar_internal OBJECT
-    ${INTERNAL_HEADERS}
-    ${INTERNAL_SOURCES}
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        ${INTERNAL_HEADERS}
+        ${INTERNAL_SOURCES}
+)
+
+target_include_directories(${PROJECT_NAME}
+    SYSTEM
+        PUBLIC
+            ${OPENAL_INCLUDE_DIR}
+            ${STB_INCLUDE_DIR}
+)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        Mule::Utilities
 )
 
 set_target_properties(
-    tulpar_internal
+    ${PROJECT_NAME}
 
     PROPERTIES
 

@@ -9,7 +9,7 @@ project(${TULPAR_AUDIO_NAME})
 
 set(TULPAR_LIB_ALIAS Tulpar::Audio)
 
-add_library(${PROJECT_NAME})
+add_library(${PROJECT_NAME} "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(${TULPAR_LIB_ALIAS} ALIAS ${PROJECT_NAME})
 
@@ -60,11 +60,16 @@ endif()
 include_directories(
     ${TULPAR_INCLUDE_DIR}
     ${TULPAR_INTERNAL_INCLUDE_DIR}
-    ${MULE_INCLUDE_DIR}
 )
 
-include_directories( SYSTEM
-    ${TULPAR_EXTERNAL_INCLUDE_DIRS}
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${SLEIPNIR_INSTALL_INCLUDE_DIR}>
+        $<TARGET_PROPERTY:Tulpar::Audio::Audio,INTERFACE_INCLUDE_DIRECTORIES>
+
+    SYSTEM PUBLIC
+        ${TULPAR_EXTERNAL_INCLUDE_DIRS}
 )
 
 install(
@@ -121,15 +126,28 @@ target_sources(${PROJECT_NAME}
         ${TULPAR_AUDIO_SOURCES}
 
         ${TULPAR_AUDIO_EXTRA}
-
-        $<TARGET_OBJECTS:audio>
-        $<TARGET_OBJECTS:tulpar_internal>
 )
 
+# external dependencies
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Mule::Utilities
         ${OPENAL_LIBRARY}
+)
+
+# internal static libraries
+if (UNIX)
+    set(EXPORT_SYMBOLS_PREFIX "-Wl,--whole-archive")
+    set(EXPORT_SYMBOLS_SUFFIX "-Wl,--no-whole-archive")
+endif()
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        ${EXPORT_SYMBOLS_PREFIX}
+        Tulpar::Audio::Audio
+        ${EXPORT_SYMBOLS_SUFFIX}
+
+        Tulpar::Audio::Internal
 )
 
 set_target_properties(
