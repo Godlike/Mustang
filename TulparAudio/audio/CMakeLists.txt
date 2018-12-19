@@ -44,5 +44,11 @@ install(
 )
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    set_target_properties(
+        audio
+
+        PROPERTIES
+
+        POSITION_INDEPENDENT_CODE ON
+    )
 endif()

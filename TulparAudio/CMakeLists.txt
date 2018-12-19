@@ -32,7 +32,13 @@ if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
 
+# Force LIBTYPE to be STATIC while saving initial value to temp variable
+set(TMP_LIBTYPE ${LIBTYPE})
+set(LIBTYPE "STATIC")
+
 add_subdirectory(${OPENAL_ROOT_DIR})
+
+set(LIBTYPE ${TMP_LIBTYPE})
 
 if (NOT MULE_FOUND)
     include(MuleConfig)
