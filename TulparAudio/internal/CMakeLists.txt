@@ -38,5 +38,11 @@ set_target_properties(
 )
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    set_target_properties(
+        tulpar_internal
+
+        PROPERTIES
+
+        POSITION_INDEPENDENT_CODE ON
+    )
 endif()
