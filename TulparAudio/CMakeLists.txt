@@ -43,14 +43,13 @@ if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
 
-# Force BUILD_SHARED_LIBS to be OFF while saving initial value to temp variable
-set(TMP_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Force OpenAL to build static library" FORCE)
+# Force LIBTYPE to be STATIC while saving initial value to temp variable
+set(TMP_LIBTYPE ${LIBTYPE})
+set(LIBTYPE "STATIC")
 
 add_subdirectory(${OPENAL_ROOT_DIR})
 
-# Restore initial BUILD_SHARED_LIBS value
-set(BUILD_SHARED_LIBS ${TMP_BUILD_SHARED_LIBS} CACHE BOOL "Restored initial BUILD_SHARED_LIBS value" FORCE)
+set(LIBTYPE ${TMP_LIBTYPE})
 
 if (NOT MULE_FOUND)
     include(MuleConfig)
@@ -132,7 +131,6 @@ target_sources(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Mule::Utilities
-        ${OPENAL_LIBRARY}
 )
 
 # internal static libraries
@@ -148,6 +146,7 @@ target_link_libraries(${PROJECT_NAME}
         ${EXPORT_SYMBOLS_SUFFIX}
 
         Tulpar::Audio::Internal
+        ${OPENAL_LIBRARY}
 )
 
 set_target_properties(

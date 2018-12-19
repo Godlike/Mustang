@@ -11,6 +11,8 @@ add_library(${PROJECT_NAME} STATIC "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(Tulpar::Audio::Internal ALIAS ${PROJECT_NAME})
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
 # OpenAL
 include(OpenALConfig)
 
@@ -68,5 +70,11 @@ set_target_properties(
 )
 
 if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    set_target_properties(
+        ${PROJECT_NAME}
+
+        PROPERTIES
+
+        POSITION_INDEPENDENT_CODE ON
+    )
 endif()
