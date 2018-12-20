@@ -31,25 +31,20 @@ if (UNIX)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -ggdb3 -O0")
 elseif(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /W3") # TODO set WX (warning as error)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DAL_LIBTYPE_STATIC)
 endif()
 
 ## Installation info
 include(TulparInstallInfo)
+
+# OpenAL
+include(OpenALConfig)
 
 message(STATUS "Version: ${TULPAR_VERSION}")
 
 if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
-
-# Force LIBTYPE to be STATIC while saving initial value to temp variable
-set(TMP_LIBTYPE ${LIBTYPE})
-set(LIBTYPE "STATIC")
-
-add_subdirectory(${OPENAL_ROOT_DIR})
-
-set(LIBTYPE ${TMP_LIBTYPE})
 
 if (NOT MULE_FOUND)
     include(MuleConfig)
@@ -146,7 +141,6 @@ target_link_libraries(${PROJECT_NAME}
         ${EXPORT_SYMBOLS_SUFFIX}
 
         Tulpar::Audio::Internal
-        ${OPENAL_LIBRARY}
 )
 
 set_target_properties(
@@ -213,18 +207,6 @@ install(
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
     COMPONENT tulpar_headers
-)
-
-install( DIRECTORY ${OPENAL_INCLUDE_DIR}/AL
-    DESTINATION ${TULPAR_INSTALL_INCLUDE_DIR}
-    COMPONENT tulpar_extra
-    FILES_MATCHING
-        PATTERN "*.hpp"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
-        PATTERN "*.h"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
-        PATTERN "*.inl"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 install( DIRECTORY ${GLM_INCLUDE_DIR}/glm

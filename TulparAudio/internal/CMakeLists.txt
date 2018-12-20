@@ -16,6 +16,14 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 # OpenAL
 include(OpenALConfig)
 
+# Force LIBTYPE to be STATIC while saving initial value to temp variable
+set(TMP_LIBTYPE ${LIBTYPE})
+set(LIBTYPE "STATIC")
+
+add_subdirectory(${OPENAL_ROOT_DIR} third_party)
+
+set(LIBTYPE ${TMP_LIBTYPE})
+
 # STB
 include(stb)
 
@@ -59,6 +67,9 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Mule::Utilities
+
+    INTERFACE
+        ${OPENAL_LIBRARY}
 )
 
 set_target_properties(
@@ -67,6 +78,26 @@ set_target_properties(
     PROPERTIES
 
     FOLDER "${TARGET_FOLDER_ROOT}"
+)
+
+target_compile_definitions(
+    ${PROJECT_NAME}
+
+    PUBLIC
+
+    ${OPENAL_DEFINITIONS}
+)
+
+install( DIRECTORY ${OPENAL_INCLUDE_DIR}/AL
+    DESTINATION ${TULPAR_INSTALL_INCLUDE_DIR}
+    COMPONENT tulpar_extra
+    FILES_MATCHING
+        PATTERN "*.hpp"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.h"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.inl"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 if (UNIX)
