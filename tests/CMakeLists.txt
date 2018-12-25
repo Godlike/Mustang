@@ -7,8 +7,9 @@ cmake_minimum_required(VERSION 3.4)
 list(APPEND CMAKE_MODULE_PATH "${CATCH_ROOT}/contrib")
 
 include(ParseAndAddCatchTests)
+include(TulparAudioConfig)
 
-include_directories(${TULPAR_INCLUDE_DIR} ${CATCH_ROOT}/single_include)
+include_directories(${TULPAR_INCLUDE_DIR} ${TULPAR_INTERNAL_INCLUDE_DIR} ${CATCH_ROOT}/single_include)
 
 set(TARGET_FOLDER_ROOT "${TARGET_FOLDER_ROOT}/tests")
 
