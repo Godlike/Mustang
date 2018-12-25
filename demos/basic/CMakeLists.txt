@@ -7,31 +7,21 @@ cmake_policy(VERSION 3.4)
 
 project(BasicTulparDemo)
 
-set(CMAKE_CXX_STANDARD 14)
+add_executable(${PROJECT_NAME} "")
 
-find_package(Threads)
-
-set(AdditionalCatchParameters
-    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
-)
-
-include_directories(
-    ${TULPAR_INCLUDE_DIR}
-)
-
-include_directories( SYSTEM
-    ${MULE_INCLUDE_DIR}
-    ${TULPAR_EXTERNAL_INCLUDE_DIRS}
-)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 add_definitions(
     -DTULPAR_DEMO_WORKING_DIR="${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 
-add_executable(${PROJECT_NAME} main.cpp)
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        main.cpp
+)
+
 target_link_libraries(${PROJECT_NAME}
-    ${TULPAR_AUDIO_LIB}
-    ${CMAKE_THREAD_LIBS_INIT}
+    Tulpar::Audio
 )
 
 set_target_properties(
