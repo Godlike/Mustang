@@ -40,6 +40,14 @@ include(TulparInstallInfo)
 # OpenAL
 include(OpenALConfig)
 
+# Force LIBTYPE to be STATIC while saving initial value to temp variable
+set(TMP_LIBTYPE ${LIBTYPE})
+set(LIBTYPE "STATIC")
+
+add_subdirectory(${OPENAL_ROOT_DIR})
+
+set(LIBTYPE ${TMP_LIBTYPE})
+
 message(STATUS "Version: ${TULPAR_VERSION}")
 
 if (NOT GLM_FOUND)
@@ -120,6 +128,9 @@ target_sources(${PROJECT_NAME}
         ${TULPAR_AUDIO_SOURCES}
 
         ${TULPAR_AUDIO_EXTRA}
+
+        $<TARGET_OBJECTS:Tulpar::Audio::Internal>
+        $<TARGET_OBJECTS:Tulpar::Audio::Audio>
 )
 
 # external dependencies
@@ -128,19 +139,9 @@ target_link_libraries(${PROJECT_NAME}
         Mule::Utilities
 )
 
-# internal static libraries
-if (UNIX)
-    set(EXPORT_SYMBOLS_PREFIX "-Wl,--whole-archive")
-    set(EXPORT_SYMBOLS_SUFFIX "-Wl,--no-whole-archive")
-endif()
-
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        ${EXPORT_SYMBOLS_PREFIX}
-        Tulpar::Audio::Audio
-        ${EXPORT_SYMBOLS_SUFFIX}
-
-        Tulpar::Audio::Internal
+        ${OPENAL_LIBRARY}
 )
 
 set_target_properties(
@@ -155,6 +156,18 @@ install( TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
     LIBRARY DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
     ARCHIVE DESTINATION ${TULPAR_INSTALL_LIBRARY_DIR}
+)
+
+install( DIRECTORY ${OPENAL_INCLUDE_DIR}/AL
+    DESTINATION ${TULPAR_INSTALL_INCLUDE_DIR}
+    COMPONENT tulpar_extra
+    FILES_MATCHING
+        PATTERN "*.hpp"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.h"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.inl"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 if (TULPAR_BUILD_DOCUMENTATION)

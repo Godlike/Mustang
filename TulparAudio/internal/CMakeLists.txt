@@ -7,7 +7,7 @@ cmake_policy(VERSION 3.8)
 
 project(TulparAudio_Internal)
 
-add_library(${PROJECT_NAME} STATIC "")
+add_library(${PROJECT_NAME} OBJECT "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(Tulpar::Audio::Internal ALIAS ${PROJECT_NAME})
 
@@ -15,14 +15,6 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 # OpenAL
 include(OpenALConfig)
-
-# Force LIBTYPE to be STATIC while saving initial value to temp variable
-set(TMP_LIBTYPE ${LIBTYPE})
-set(LIBTYPE "STATIC")
-
-add_subdirectory(${OPENAL_ROOT_DIR} third_party)
-
-set(LIBTYPE ${TMP_LIBTYPE})
 
 # STB
 include(stb)
@@ -64,12 +56,9 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
     PUBLIC
-        Mule::Utilities
-
-    INTERFACE
-        ${OPENAL_LIBRARY}
+        $<TARGET_PROPERTY:Mule::Utilities,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set_target_properties(
@@ -86,18 +75,6 @@ target_compile_definitions(
     PUBLIC
 
     ${OPENAL_DEFINITIONS}
-)
-
-install( DIRECTORY ${OPENAL_INCLUDE_DIR}/AL
-    DESTINATION ${TULPAR_INSTALL_INCLUDE_DIR}
-    COMPONENT tulpar_extra
-    FILES_MATCHING
-        PATTERN "*.hpp"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
-        PATTERN "*.h"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
-        PATTERN "*.inl"
-            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 if (UNIX)

@@ -7,11 +7,14 @@ cmake_policy(VERSION 3.8)
 
 project(TulparAudio_Audio)
 
-add_library(${PROJECT_NAME} STATIC "")
+add_library(${PROJECT_NAME} OBJECT "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(Tulpar::Audio::Audio ALIAS ${PROJECT_NAME})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
+# OpenAL
+include(OpenALConfig)
 
 set(AUDIO_HEADERS
     include/tulpar/audio/Buffer.hpp
@@ -32,14 +35,15 @@ target_sources(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    SYSTEM
+        PUBLIC
+            ${OPENAL_INCLUDE_DIR}
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}
     PUBLIC
-        Mule::Utilities
-        Tulpar::Audio::Internal
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        $<TARGET_PROPERTY:Mule::Utilities,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set_target_properties(
