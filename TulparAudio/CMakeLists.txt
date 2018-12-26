@@ -9,13 +9,13 @@ project(${TULPAR_AUDIO_NAME})
 
 set(TULPAR_LIB_ALIAS Tulpar::Audio)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_library(${PROJECT_NAME} "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(${TULPAR_LIB_ALIAS} ALIAS ${PROJECT_NAME})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 find_package(Threads)
 
@@ -59,16 +59,14 @@ if (NOT MULE_FOUND)
     add_subdirectory("${MULE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/Mule")
 endif()
 
-include_directories(
-    ${TULPAR_INCLUDE_DIR}
-    ${TULPAR_INTERNAL_INCLUDE_DIR}
-)
-
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${SLEIPNIR_INSTALL_INCLUDE_DIR}>
         $<TARGET_PROPERTY:Tulpar::Audio::Audio,INTERFACE_INCLUDE_DIRECTORIES>
+
+    PRIVATE
+        $<TARGET_PROPERTY:Tulpar::Audio::Internal,INTERFACE_INCLUDE_DIRECTORIES>
 
     SYSTEM PUBLIC
         ${TULPAR_EXTERNAL_INCLUDE_DIRS}

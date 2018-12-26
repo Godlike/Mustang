@@ -7,6 +7,8 @@ cmake_policy(VERSION 3.8)
 
 project(TulparAudio_Audio)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_library(${PROJECT_NAME} OBJECT "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(Tulpar::Audio::Audio ALIAS ${PROJECT_NAME})
@@ -44,6 +46,10 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         $<TARGET_PROPERTY:Mule::Utilities,INTERFACE_INCLUDE_DIRECTORIES>
+
+    PRIVATE
+        $<TARGET_PROPERTY:Tulpar::Audio,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:Tulpar::Audio::Internal,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set_target_properties(
