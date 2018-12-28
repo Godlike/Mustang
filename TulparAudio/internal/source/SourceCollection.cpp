@@ -1089,7 +1089,7 @@ audio::Source SourceCollection::CreateObject(SourceHandle source)
     m_sourceQueuedBuffers.erase(source);
 
     return audio::Source(std::make_shared<SourceHandle>(source)
-            , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
+        , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
     );
 }
 

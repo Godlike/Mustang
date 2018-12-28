@@ -25,8 +25,8 @@ namespace tulpar
 namespace internal
 {
 
-/** @brief  Handles basic buffer id operations */
-struct OpenAVBufferHandler
+/** @brief  Contains basic buffer id operations */
+namespace OpenAVBufferHandler
 {
     /** @brief  Generates a collection of buffer handles via OpenAL
      *
@@ -37,7 +37,7 @@ struct OpenAVBufferHandler
      *
      *  @return a collection of newly generated buffer handles
      */
-    static Collection<audio::Buffer>::Handles Generate(uint32_t batchSize);
+    Collection<audio::Buffer>::Handles Generate(uint32_t batchSize);
 
     /** @brief  Resets given handle
      *
@@ -45,14 +45,14 @@ struct OpenAVBufferHandler
      *
      *  @param  handle  valid buffer handle
      */
-    static void Reclaim(Collection<audio::Buffer>::Handle handle);
+    void Reclaim(Collection<audio::Buffer>::Handle handle);
 
     /** @brief  Returns given collection of handles to OpenAL
      *
      *  @param  handle  collection of valid buffer handles
      */
-    static void Delete(Collection<audio::Buffer>::Handles const& handles);
-};
+    void Delete(Collection<audio::Buffer>::Handles const& handles);
+}
 
 /** @brief  Collection working with audio buffers */
 class BufferCollection
