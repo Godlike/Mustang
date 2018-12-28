@@ -32,7 +32,7 @@ std::vector<TulparConfigurator::Device> TulparConfigurator::GetDevices()
     std::string const defaultDevice(alcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER));
     ALCchar const* devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
 
-    if (NULL != devices && '\0' != (*devices))
+    if (nullptr != devices && '\0' != (*devices))
     {
         ALCchar const* it = devices;
 
