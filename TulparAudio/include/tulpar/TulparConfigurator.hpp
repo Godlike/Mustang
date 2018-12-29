@@ -22,6 +22,21 @@ public:
     /** @brief  Device description */
     struct Device
     {
+        /** @brief  Basic constructor
+         *
+         *  Initializes device with given values. Default values:
+         *  - name is empty
+         *  - default flag is set to @c true
+         *
+         *  @param  name        device name
+         *  @param  isDefault   indicates if device is considered default by the system
+         */
+        Device(std::string const& name = std::string(), bool isDefault = true)
+            : name(name)
+            , isDefault(isDefault)
+        {
+        }
+
         //! Device name
         std::string name;
 

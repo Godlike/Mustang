@@ -16,11 +16,7 @@ namespace tulpar
 TulparConfigurator::TulparConfigurator()
     : bufferBatch(32)
     , sourceBatch(32)
-    , device(TulparConfigurator::Device
-        {
-            std::string()
-            , true
-        })
+    , device()
 {
 
 }
@@ -39,14 +35,14 @@ std::vector<TulparConfigurator::Device> TulparConfigurator::GetDevices()
         std::string name(it);
         it += name.size() + 1;
 
-        result.push_back({name, (0 == defaultDevice.compare(name))});
+        result.emplace_back(name, (0 == defaultDevice.compare(name)));
 
         while (*it != '\0')
         {
             name = it;
             it += name.size() + 1;
 
-            result.push_back({name, (0 == defaultDevice.compare(name))});
+            result.emplace_back(name, (0 == defaultDevice.compare(name)));
         }
 
         LOG->Debug("TulparConfigurator::GetDevices() found {} devices", result.size());
