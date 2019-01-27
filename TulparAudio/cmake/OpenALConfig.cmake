@@ -10,6 +10,8 @@ set(ALSOFT_CONFIG OFF CACHE BOOL "Flag to override default ALSOFT_CONFIG value")
 set(ALSOFT_HRTF_DEFS OFF CACHE BOOL "Flag to override default ALSOFT_HRTF_DEFS value")
 set(ALSOFT_AMBDEC_PRESETS OFF CACHE BOOL "Flag to override default ALSOFT_AMBDEC_PRESETS value")
 set(ALSOFT_INSTALL OFF CACHE BOOL "Flag to override default ALSOFT_INSTALL value")
+set(LIBTYPE "STATIC" CACHE STRING "Build OpenAL as a static library")
+set(OPENAL_DEFINITIONS "AL_LIBTYPE_STATIC")
 
 if (NOT DEFINED OPENAL_ROOT_DIR)
     set(OPENAL_ROOT_DIR
