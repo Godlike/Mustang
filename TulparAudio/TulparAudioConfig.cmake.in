@@ -3,7 +3,34 @@
 # (http://opensource.org/licenses/MIT)
 
 set(PREFIX ${CMAKE_CURRENT_LIST_DIR}/../..)
+set(TULPAR_LINK_LIBRARIES
+    Mule::Utilities
+)
 
-set(Tulpar_INCLUDE_DIRS ${PREFIX}/@TULPAR_INSTALL_INCLUDE_DIR@)
-set(Tulpar_LIBRARY_DIRS ${PREFIX}/@TULPAR_INSTALL_LIBRARY_DIR@)
-set(Tulpar_LIB @TULPAR_AUDIO_LIB@)
+include(CMakeFindDependencyMacro)
+
+find_dependency(MuleUtilities REQUIRED)
+
+# Describe imported library
+add_library(@PROJECT_NAME@ SHARED IMPORTED)
+set_target_properties(@PROJECT_NAME@ PROPERTIES
+    IMPORTED_LOCATION "${PREFIX}/@TULPAR_INSTALL_LIBRARY_DIR@/$<TARGET_FILE_NAME:@PROJECT_NAME@>"
+    INTERFACE_INCLUDE_DIRECTORIES "${PREFIX}/@TULPAR_INSTALL_INCLUDE_DIR@"
+    INTERFACE_LINK_LIBRARIES "${TULPAR_LINK_LIBRARIES}"
+)
+
+# Create aliases to imported library
+add_library(@PROJECT_NAME@Proxy INTERFACE)
+add_library(@PROJECT_NAME@::@PROJECT_NAME@ ALIAS @PROJECT_NAME@Proxy)
+add_library(@TULPAR_LIB_ALIAS@ ALIAS @PROJECT_NAME@Proxy)
+
+target_link_libraries(@PROJECT_NAME@Proxy
+    INTERFACE
+        @PROJECT_NAME@
+        ${TULPAR_LINK_LIBRARIES}
+)
+
+target_include_directories(@PROJECT_NAME@Proxy
+    SYSTEM INTERFACE
+        ${PREFIX}/@TULPAR_INSTALL_INCLUDE_DIR@
+)

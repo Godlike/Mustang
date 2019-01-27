@@ -74,9 +74,9 @@ template<typename T>
     m_available.pop();
     m_used.push_back(handle);
 
-    m_objects[handle] = CreateObject(handle);
+    m_objects.emplace(handle, CreateObject(handle));
 
-    return m_objects[handle];
+    return m_objects.at(handle);
 }
 
 template<typename T>
@@ -114,7 +114,7 @@ template<typename T>
         m_available.pop();
         m_used.push_back(handle);
 
-        m_objects[handle] = CreateObject(handle);
+        m_objects.emplace(handle, CreateObject(handle));
 
         result.push_back(handle);
     }
