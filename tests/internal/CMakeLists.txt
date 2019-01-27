@@ -15,26 +15,16 @@ set(AdditionalCatchParameters
 
 set(TARGET_FOLDER_ROOT "${TARGET_FOLDER_ROOT}/internal")
 
-include_directories(
-    ${TULPAR_INCLUDE_DIR}
-    ${TULPAR_INTERNAL_INCLUDE_DIR}
-)
-
-include_directories( SYSTEM
-    ${MULE_INCLUDE_DIR}
-    ${TULPAR_EXTERNAL_INCLUDE_DIRS}
-)
-
 set(TEST_UTILS
     CollectionTestUtils.hpp
 )
 
 add_executable(BufferCollectionTest BufferCollectionTest.cpp ${TEST_UTILS})
-target_link_libraries(BufferCollectionTest ${TULPAR_AUDIO_LIB})
+target_link_libraries(BufferCollectionTest Tulpar::Audio)
 ParseAndAddCatchTests(BufferCollectionTest)
 
 add_executable(SourceCollectionTest SourceCollectionTest.cpp ${TEST_UTILS})
-target_link_libraries(SourceCollectionTest ${TULPAR_AUDIO_LIB})
+target_link_libraries(SourceCollectionTest Tulpar::Audio)
 ParseAndAddCatchTests(SourceCollectionTest)
 
 set_target_properties(

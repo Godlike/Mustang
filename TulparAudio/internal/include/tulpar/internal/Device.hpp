@@ -7,9 +7,9 @@
 #ifndef TULPAR_INTERNAL_DEVICE_HPP
 #define TULPAR_INTERNAL_DEVICE_HPP
 
-#include <AL/alc.h>
-
 #include <tulpar/TulparConfigurator.hpp>
+
+#include <AL/alc.h>
 
 namespace tulpar
 {
