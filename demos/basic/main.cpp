@@ -33,19 +33,12 @@
 
 static std::string const testFile(TULPAR_DEMO_WORKING_DIR"data/ding_02.ogg");
 
-constexpr double pi()
-{
-    return std::atan(1) * 4;
-}
-
-constexpr double tau()
-{
-    return pi() * 2;
-}
+constexpr double g_pi = 3.14159265359;
+constexpr double g_tau = g_pi * 2;
 
 std::array<float, 3> GetCircleCoords(float radius, float progress)
 {
-    float const radians = progress * tau();
+    float const radians = progress * g_tau;
 
     return {{
         radius * std::sin(radians)      // x

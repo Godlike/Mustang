@@ -19,7 +19,7 @@ namespace tests
 namespace internal
 {
 
-static volatile uint32_t s_incrementIndex = 0;
+static uint32_t s_incrementIndex = 0;
 
 template<typename T>
     typename tulpar::internal::Collection<T>::Handles IncrementGenerator(uint32_t batchSize)
