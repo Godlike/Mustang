@@ -10,3 +10,6 @@
 [submodule "third_party/Catch2"]
 	path = third_party/Catch2
 	url = https://github.com/catchorg/Catch2
+[submodule "TulparAudio/third_party/openal-soft"]
+	path = TulparAudio/third_party/openal-soft
+	url = https://github.com/godlike/openal-soft.git
