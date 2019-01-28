@@ -40,6 +40,8 @@ bool TulparAudio::Initialize(TulparConfigurator const& config)
 {
     assert(false == m_isInitialized);
 
+    Loggers::Instance().Reinitialize();
+
     LOG->Trace("TulparAudio::Initialize({}) started", config);
 
     m_device.reset(internal::Device::Create(config.device));
