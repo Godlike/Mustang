@@ -307,6 +307,9 @@ protected:
     virtual audio::Source CreateObject(SourceHandle source) override final;
 
 private:
+    //! Resets meta information for given source
+    void ResetSourceMeta(SourceHandle source);
+
     //! Meta information for initialized source handles
     struct Meta
     {
