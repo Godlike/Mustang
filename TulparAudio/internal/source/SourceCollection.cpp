@@ -308,6 +308,8 @@ void SourceCollection::InheritCollection(SourceCollection const& other
 
 audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
 {
+    assert(m_sourceBuffers.cend() != m_sourceBuffers.find(source));
+
     audio::Buffer buffer;
 
     switch (GetSourceType(source))
@@ -349,6 +351,8 @@ audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
 
 std::vector<audio::Buffer> SourceCollection::GetSourceActiveBuffers(SourceHandle source) const
 {
+    assert(m_sourceBuffers.cend() != m_sourceBuffers.find(source));
+
     std::vector<audio::Buffer> queue;
 
     switch (GetSourceType(source))
@@ -383,6 +387,8 @@ audio::Buffer SourceCollection::GetSourceStaticBuffer(SourceHandle source) const
 
 bool SourceCollection::SetSourceStaticBuffer(SourceHandle source, BufferHandle buffer)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: buffer = #{}", source, buffer);
 
     m_sourceBuffers[source] = buffer;
@@ -428,6 +434,8 @@ bool SourceCollection::SetSourceStaticBuffer(SourceHandle source, BufferHandle b
 
 std::vector<audio::Buffer> SourceCollection::GetSourceQueuedBuffers(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     std::vector<audio::Buffer> result;
 
     // clear error state
@@ -469,6 +477,8 @@ std::vector<audio::Buffer> SourceCollection::GetSourceQueuedBuffers(SourceHandle
 
 uint32_t SourceCollection::GetSourceQueueIndex(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -488,6 +498,8 @@ uint32_t SourceCollection::GetSourceQueueIndex(SourceHandle source) const
 
 bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio::Buffer> const& buffers)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set buffer queue[{}]", source, buffers.size());
 
     std::vector<ALuint> tmp(buffers.size(), 0);
@@ -538,6 +550,8 @@ bool SourceCollection::QueueSourceBuffers(SourceHandle source, std::vector<audio
 
 void SourceCollection::ResetSource(SourceHandle source)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: reset", source);
 
     Reclaim(source);
@@ -550,6 +564,8 @@ void SourceCollection::ResetSource(SourceHandle source)
 
 bool SourceCollection::PlaySource(SourceHandle source)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: play", source);
 
     // clear error state
@@ -569,6 +585,8 @@ bool SourceCollection::PlaySource(SourceHandle source)
 
 bool SourceCollection::StopSource(SourceHandle source)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: stop", source);
 
     // clear error state
@@ -588,6 +606,8 @@ bool SourceCollection::StopSource(SourceHandle source)
 
 bool SourceCollection::RewindSource(SourceHandle source)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: rewind", source);
 
     // clear error state
@@ -607,6 +627,8 @@ bool SourceCollection::RewindSource(SourceHandle source)
 
 bool SourceCollection::PauseSource(SourceHandle source)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: pause", source);
 
     // clear error state
@@ -626,11 +648,15 @@ bool SourceCollection::PauseSource(SourceHandle source)
 
 std::chrono::nanoseconds SourceCollection::GetSourcePlaybackDuration(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     return m_sourceMeta.at(source).activeTotalDuration;
 }
 
 std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     std::chrono::nanoseconds result(0);
 
     // clear error state
@@ -688,6 +714,8 @@ std::chrono::nanoseconds SourceCollection::GetSourcePlaybackPosition(SourceHandl
 
 bool SourceCollection::SetSourcePlaybackPosition(SourceHandle source, std::chrono::nanoseconds offset)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set playback position {}ns", source, offset.count());
 
     audio::Buffer buffer = GetSourceActiveBuffer(source);
@@ -740,6 +768,8 @@ bool SourceCollection::SetSourcePlaybackPosition(SourceHandle source, std::chron
 
 float SourceCollection::GetSourcePlaybackProgress(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     float result = 0.0f;
 
     // clear error state
@@ -772,6 +802,8 @@ float SourceCollection::GetSourcePlaybackProgress(SourceHandle source) const
 
 bool SourceCollection::SetSourcePlaybackProgress(SourceHandle source, float value)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set playback progress {}%", source, value);
 
     audio::Buffer buffer = GetSourceActiveBuffer(source);
@@ -795,6 +827,8 @@ bool SourceCollection::SetSourcePlaybackProgress(SourceHandle source, float valu
 
 audio::Source::State SourceCollection::GetSourceState(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     audio::Source::State state = audio::Source::State::Unknown;
 
     // clear error state
@@ -848,6 +882,8 @@ audio::Source::State SourceCollection::GetSourceState(SourceHandle source) const
 
 audio::Source::Type SourceCollection::GetSourceType(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     audio::Source::Type type = audio::Source::Type::Unknown;
 
     // clear error type
@@ -896,6 +932,8 @@ audio::Source::Type SourceCollection::GetSourceType(SourceHandle source) const
 
 bool SourceCollection::IsSourceRelative(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -916,6 +954,8 @@ bool SourceCollection::IsSourceRelative(SourceHandle source) const
 
 bool SourceCollection::SetSourceRelative(SourceHandle source, bool flag)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set relative {}", source, flag);
 
     // clear error state
@@ -935,6 +975,8 @@ bool SourceCollection::SetSourceRelative(SourceHandle source, bool flag)
 
 bool SourceCollection::IsSourceLooping(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -955,6 +997,8 @@ bool SourceCollection::IsSourceLooping(SourceHandle source) const
 
 bool SourceCollection::SetSourceLooping(SourceHandle source, bool flag)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set looping {}", source, flag);
 
     // clear error state
@@ -974,6 +1018,8 @@ bool SourceCollection::SetSourceLooping(SourceHandle source, bool flag)
 
 float SourceCollection::GetSourcePitch(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -994,6 +1040,8 @@ float SourceCollection::GetSourcePitch(SourceHandle source) const
 
 bool SourceCollection::SetSourcePitch(SourceHandle source, float value)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set pitch {}", source, value);
 
     // clear error state
@@ -1013,6 +1061,8 @@ bool SourceCollection::SetSourcePitch(SourceHandle source, float value)
 
 float SourceCollection::GetSourceGain(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -1033,6 +1083,8 @@ float SourceCollection::GetSourceGain(SourceHandle source) const
 
 bool SourceCollection::SetSourceGain(SourceHandle source, float value)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set gain {}", source, value);
 
     // clear error state
@@ -1052,6 +1104,8 @@ bool SourceCollection::SetSourceGain(SourceHandle source, float value)
 
 std::array<float, 3> SourceCollection::GetSourcePosition(SourceHandle source) const
 {
+    assert(IsValid(source));
+
     // clear error state
     ALenum alErr = alGetError();
 
@@ -1077,6 +1131,8 @@ std::array<float, 3> SourceCollection::GetSourcePosition(SourceHandle source) co
 
 bool SourceCollection::SetSourcePosition(SourceHandle source, std::array<float, 3> const& vec)
 {
+    assert(IsValid(source));
+
     LOG_AUDIO->Debug("Source #{}: set position {{ {}, {}, {} }}", source, vec[0], vec[1], vec[2]);
 
     // clear error state
@@ -1102,7 +1158,7 @@ audio::Source SourceCollection::CreateObject(SourceHandle source)
     m_sourceQueuedBuffers.erase(source);
 
     return audio::Source(std::make_shared<SourceHandle>(source)
-            , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
+        , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
     );
 }
 

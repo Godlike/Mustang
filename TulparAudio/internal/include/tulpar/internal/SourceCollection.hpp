@@ -26,8 +26,8 @@ namespace tulpar
 namespace internal
 {
 
-/** @brief  Handles basic source id operations */
-struct OpenAVSourceHandler
+/** @brief  Contains basic source id operations */
+namespace OpenAVSourceHandler
 {
     /** @brief  Generates a collection of source handles via OpenAL
      *
@@ -35,7 +35,7 @@ struct OpenAVSourceHandler
      *
      *  @return a collection of newly generated source handles
      */
-    static Collection<audio::Source>::Handles Generate(uint32_t batchSize);
+    Collection<audio::Source>::Handles Generate(uint32_t batchSize);
 
     /** @brief  Resets given handle
      *
@@ -43,14 +43,14 @@ struct OpenAVSourceHandler
      *
      *  @param  handle  valid source handle
      */
-    static void Reclaim(Collection<audio::Source>::Handle handle);
+    void Reclaim(Collection<audio::Source>::Handle handle);
 
     /** @brief  Returns given collection of handles to OpenAL
      *
      *  @param  handle  collection of valid source handles
      */
-    static void Delete(Collection<audio::Source>::Handles const& handle);
-};
+    void Delete(Collection<audio::Source>::Handles const& handle);
+}
 
 /** @brief  Collection working with audio sources */
 class SourceCollection
