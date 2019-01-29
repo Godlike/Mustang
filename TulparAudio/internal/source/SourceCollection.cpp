@@ -327,7 +327,20 @@ audio::Buffer SourceCollection::GetSourceActiveBuffer(SourceHandle source) const
         case audio::Source::Type::Streaming:
         {
             std::vector<audio::Buffer> queue = GetSourceQueuedBuffers(source);
-            buffer = queue[GetSourceQueueIndex(source)];
+
+            if (!queue.empty())
+            {
+                uint32_t const index = GetSourceQueueIndex(source);
+
+                if (index < queue.size())
+                {
+                    buffer = queue[index];
+                }
+                else
+                {
+                    buffer = queue[0];
+                }
+            }
 
             break;
         }
