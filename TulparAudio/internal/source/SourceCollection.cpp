@@ -68,6 +68,10 @@ void OpenAVSourceHandler::Reclaim(Collection<audio::Source>::Handle handle)
     ALenum alErr = alGetError();
 
     alSourceStop(static_cast<ALuint>(handle));
+    alSourcei(static_cast<ALuint>(handle)
+        , AL_BUFFER
+        , 0
+    );
 
     alErr = alGetError();
 
@@ -554,8 +558,8 @@ void SourceCollection::ResetSource(SourceHandle source)
 
     LOG_AUDIO->Debug("Source #{}: reset", source);
 
+    ResetSourceMeta(source);
     Reclaim(source);
-    SetSourceStaticBuffer(source, *(audio::Buffer().GetSharedHandle()));
 
     m_sourceMeta.erase(source);
     m_sourceBuffers.erase(source);
@@ -1160,6 +1164,24 @@ audio::Source SourceCollection::CreateObject(SourceHandle source)
     return audio::Source(std::make_shared<SourceHandle>(source)
         , std::make_shared<SourceCollection*>(const_cast<SourceCollection*>(this))
     );
+}
+
+void SourceCollection::ResetSourceMeta(SourceHandle source)
+{
+    assert(IsValid(source));
+
+    LOG_AUDIO->Debug("Source #{}: reset meta", source);
+
+    Meta& meta = m_sourceMeta[source];
+
+    {
+        using namespace std::chrono_literals;
+
+        meta.activeSampleCount = 0;
+        meta.activeTotalDuration = 0ns;
+    }
+
+    m_sourceQueuedBuffers[source].clear();
 }
 
 }
